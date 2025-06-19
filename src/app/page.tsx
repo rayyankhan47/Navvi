@@ -123,7 +123,7 @@ const AnalysisDemo = () => {
               opacity: index === currentStep ? 1 : 0.5,
               x: index === currentStep ? 0 : -20
             }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
           >
             {step}
           </motion.div>
@@ -150,7 +150,7 @@ const FeatureCard = ({
     whileHover={{ y: -8, scale: 1.02 }}
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
+    transition={{ duration: 0.6, ease: "easeOut" }}
   >
     <div className={`w-12 h-12 ${gradient} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
       <Icon className="w-6 h-6 text-white" />
@@ -178,7 +178,7 @@ const Testimonial = ({
     className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6"
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
+    transition={{ duration: 0.6, ease: "easeOut" }}
   >
     <div className="flex items-start space-x-4">
       <img src={avatar} alt={name} className="w-12 h-12 rounded-full" />
@@ -247,13 +247,13 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <motion.h1 
               className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-lime-100 to-green-100 bg-clip-text text-transparent"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
+              transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
             >
               The Future of
               <br />
@@ -264,7 +264,7 @@ export default function HomePage() {
               className="text-xl md:text-2xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             >
               Real code analysis, not AI chat. Interactive learning paths that actually help developers 
               understand complex codebases in minutes, not months.
@@ -274,7 +274,7 @@ export default function HomePage() {
               className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-12"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
             >
               <Link 
                 href="/auth/signin"
@@ -295,7 +295,7 @@ export default function HomePage() {
               className="max-w-md mx-auto"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
             >
               <AnalysisDemo />
             </motion.div>
@@ -310,7 +310,7 @@ export default function HomePage() {
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Not Another GPT Wrapper
@@ -368,7 +368,7 @@ export default function HomePage() {
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Loved by Developers
@@ -410,7 +410,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Ready to Transform Your Onboarding?
