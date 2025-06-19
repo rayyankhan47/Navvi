@@ -241,4 +241,10 @@ npm run lint         # Run ESLint
 **Last Updated**: [Current Date]
 **Session Duration**: ~5 hours
 **Next Session Goal**: Phase 2 - Interactive Visualizations
-**Current Theme**: Lime green with smooth easeInOut animations 
+**Current Theme**: Lime green with smooth easeInOut animations
+
+- Refactored backend to normalize all file paths to repo-relative before grouping/relationships.
+- Improved grouping logic (preparing to group by first two path segments for more granularity).
+- Added full screen (expand) mode to dependency graph UI with modal overlay and Esc/close support.
+- Added plans for further debugging: logging file paths, nodes, edges, and ensuring analysis freshness.
+- Next: Will add more logging and grouping improvements, and debug analysis freshness before further features. 
