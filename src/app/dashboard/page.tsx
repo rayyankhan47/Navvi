@@ -70,16 +70,30 @@ export default function Dashboard() {
   const handleAnalyzeRepository = async () => {
     if (!selectedRepo) return;
     
+    // Find the selected repository object to get the full name and URL
+    const selectedRepository = repositories.find(repo => repo.full_name === selectedRepo);
+    if (!selectedRepository) {
+      setAnalysisError("Repository not found");
+      return;
+    }
+    
     setIsAnalyzing(true);
     setAnalysisError("");
     
     try {
+      const repoUrl = `https://github.com/${selectedRepository.full_name}.git`;
+      console.log('Selected repository:', selectedRepository);
+      console.log('Repository URL being sent:', repoUrl);
+      
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ repository: selectedRepo }),
+        body: JSON.stringify({ 
+          repository: selectedRepo,
+          repoUrl: repoUrl
+        }),
       });
       
       if (response.ok) {
@@ -91,10 +105,12 @@ export default function Dashboard() {
         router.push(`/analysis/${safeRepoName}`);
       } else {
         const errorData = await response.json();
+        console.error("Analysis failed:", errorData);
         setAnalysisError(errorData.error || "Failed to analyze repository");
         setIsAnalyzing(false);
       }
     } catch (error) {
+      console.error("Network error:", error);
       setAnalysisError("Network error occurred");
       setIsAnalyzing(false);
     }

@@ -6,6 +6,8 @@ import traverse from '@babel/traverse';
 import * as t from '@babel/types';
 import fs from 'fs';
 import path from 'path';
+import { simpleGit, SimpleGit } from 'simple-git';
+import os from 'os';
 import {
   FileAnalysis,
   FunctionInfo,
@@ -28,6 +30,9 @@ import {
 export class AnalysisEngine {
   private config: AnalysisConfig;
   private progressCallback?: (progress: AnalysisProgress) => void;
+  private git: SimpleGit;
+  private tempDir: string;
+  private accessToken?: string;
 
   constructor(config: AnalysisConfig = {
     languages: ['javascript', 'typescript', 'jsx', 'tsx'],
@@ -36,8 +41,11 @@ export class AnalysisEngine {
     complexityThreshold: 10,
     includeTests: false,
     includeNodeModules: false
-  }) {
+  }, accessToken?: string) {
     this.config = config;
+    this.git = simpleGit();
+    this.tempDir = path.join(os.tmpdir(), 'navvi-analysis');
+    this.accessToken = accessToken;
   }
 
   setProgressCallback(callback: (progress: AnalysisProgress) => void) {
@@ -55,49 +63,164 @@ export class AnalysisEngine {
     }
   }
 
-  async analyzeRepository(repoPath: string): Promise<RepositoryAnalysis> {
-    this.updateProgress('parsing', 0, 'Starting repository analysis...');
+  async analyzeRepository(repoUrl: string): Promise<RepositoryAnalysis> {
+    this.updateProgress('cloning', 0, 'Cloning repository...');
     
-    // TODO: Implement real analysis
-    // For now, return mock data to test the flow
-    
-    this.updateProgress('complete', 100, 'Analysis complete!');
-    
-    return {
-      repository: 'test-repo',
-      files: [],
-      architecture: {
-        components: [],
-        relationships: [],
-        layers: [],
-        patterns: [],
-        dataFlow: []
-      },
-      criticalPaths: [],
-      metrics: {
-        totalFiles: 0,
-        totalLines: 0,
-        languages: {},
-        averageComplexity: 0,
-        maxComplexity: 0,
-        maintainabilityIndex: 100,
-        technicalDebt: 0
-      },
-      insights: {
-        architecturalStyle: 'Unknown',
-        codeQuality: 'Unknown',
-        complexityDistribution: 'Unknown',
-        potentialIssues: [],
-        recommendations: [],
-        learningPath: {
-          difficulty: 'beginner',
-          estimatedTime: 2,
-          modules: [],
-          prerequisites: []
+    try {
+      // Create temp directory if it doesn't exist
+      if (!fs.existsSync(this.tempDir)) {
+        fs.mkdirSync(this.tempDir, { recursive: true });
+      }
+
+      // Generate unique directory name for this analysis
+      const repoName = this.extractRepoName(repoUrl);
+      const analysisDir = path.join(this.tempDir, `${repoName}-${Date.now()}`);
+      
+      this.updateProgress('cloning', 20, `Cloning ${repoName}...`);
+      
+      console.log(`Attempting to clone repository: ${repoUrl} to ${analysisDir}`);
+      
+      // Clone the repository
+      try {
+        if (this.accessToken) {
+          // For private repositories, use the access token
+          const authUrl = repoUrl.replace('https://github.com/', `https://${this.accessToken}@github.com/`);
+          console.log('Using authenticated URL for private repository');
+          await this.git.clone(authUrl, analysisDir);
+        } else {
+          // For public repositories, use the regular URL
+          await this.git.clone(repoUrl, analysisDir);
         }
-      },
-      timestamp: new Date()
-    };
+        console.log(`Successfully cloned repository to: ${analysisDir}`);
+      } catch (cloneError) {
+        console.error('Git clone failed:', cloneError);
+        throw new Error(`Failed to clone repository: ${cloneError}`);
+      }
+      
+      this.updateProgress('parsing', 40, 'Scanning files...');
+      
+      // Scan for files to analyze
+      const files = await this.scanFiles(analysisDir);
+      console.log(`Found ${files.length} files to analyze`);
+      
+      if (files.length === 0) {
+        console.warn('No supported files found in repository');
+        // Return empty analysis instead of failing
+        return {
+          repository: repoName,
+          files: [],
+          architecture: {
+            components: [],
+            relationships: [],
+            layers: [],
+            patterns: [],
+            dataFlow: []
+          },
+          criticalPaths: [],
+          metrics: {
+            totalFiles: 0,
+            totalLines: 0,
+            languages: {},
+            averageComplexity: 0,
+            maxComplexity: 0,
+            maintainabilityIndex: 100,
+            technicalDebt: 0
+          },
+          insights: {
+            architecturalStyle: 'Unknown',
+            codeQuality: 'Unknown',
+            complexityDistribution: 'No supported files found',
+            potentialIssues: ['Repository contains no supported file types'],
+            recommendations: ['Add JavaScript, TypeScript, JSX, or TSX files'],
+            learningPath: {
+              difficulty: 'beginner',
+              estimatedTime: 0,
+              modules: [],
+              prerequisites: []
+            }
+          },
+          timestamp: new Date()
+        };
+      }
+      
+      this.updateProgress('analyzing', 60, `Analyzing ${files.length} files...`);
+      
+      // Analyze each file
+      const fileAnalyses: FileAnalysis[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        this.updateProgress('analyzing', 60 + (i / files.length) * 20, `Analyzing ${path.basename(file)}...`, file);
+        
+        try {
+          const analysis = await this.analyzeFile(file);
+          if (analysis) {
+            fileAnalyses.push(analysis);
+          }
+        } catch (fileError) {
+          console.warn(`Failed to analyze file ${file}:`, fileError);
+          // Continue with other files instead of failing completely
+        }
+      }
+      
+      console.log(`Successfully analyzed ${fileAnalyses.length} out of ${files.length} files`);
+      
+      this.updateProgress('generating', 80, 'Generating architecture analysis...');
+      
+      // Generate architecture analysis
+      const architecture = this.buildArchitecture(fileAnalyses);
+      
+      // Identify critical paths
+      const criticalPaths = this.identifyCriticalPaths(fileAnalyses, architecture);
+      
+      // Calculate metrics
+      const metrics = this.calculateMetrics(fileAnalyses);
+      
+      // Generate insights
+      const insights = this.generateInsights(fileAnalyses, architecture, metrics);
+      
+      this.updateProgress('complete', 100, 'Analysis complete!');
+      
+      // Clean up temp directory
+      this.cleanupTempDir(analysisDir);
+      
+      return {
+        repository: repoName,
+        files: fileAnalyses,
+        architecture,
+        criticalPaths,
+        metrics,
+        insights,
+        timestamp: new Date()
+      };
+      
+    } catch (error) {
+      console.error('Repository analysis failed:', error);
+      // Clean up temp directory on error
+      try {
+        if (fs.existsSync(this.tempDir)) {
+          fs.rmSync(this.tempDir, { recursive: true, force: true });
+        }
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup temp directory:', cleanupError);
+      }
+      throw new Error(`Failed to analyze repository: ${error}`);
+    }
+  }
+
+  private extractRepoName(repoUrl: string): string {
+    // Extract repo name from various URL formats
+    const match = repoUrl.match(/([^\/]+)\.git$|([^\/]+)$/);
+    return match ? match[1] || match[2] : 'unknown-repo';
+  }
+
+  private async cleanupTempDir(dir: string) {
+    try {
+      if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    } catch (error) {
+      console.warn('Failed to cleanup temp directory:', error);
+    }
   }
 
   private async scanFiles(dir: string): Promise<string[]> {
@@ -198,9 +321,9 @@ export class AnalysisEngine {
 
       FunctionExpression(path) {
         const func = path.node;
-        if (t.isVariableDeclarator(path.parent) && t.isIdentifier(path.parent.id)) {
+        if (func.id) {
           functions.push({
-            name: path.parent.id.name,
+            name: func.id.name,
             line: func.loc?.start.line || 0,
             endLine: func.loc?.end.line || 0,
             parameters: func.params.map(p => (p as any).name || 'param'),
@@ -214,7 +337,8 @@ export class AnalysisEngine {
 
       ArrowFunctionExpression(path) {
         const func = path.node;
-        if (t.isVariableDeclarator(path.parent) && t.isIdentifier(path.parent.id)) {
+        // Only track named arrow functions
+        if (path.parent && t.isVariableDeclarator(path.parent) && t.isIdentifier(path.parent.id)) {
           functions.push({
             name: path.parent.id.name,
             line: func.loc?.start.line || 0,
@@ -229,40 +353,41 @@ export class AnalysisEngine {
       },
 
       ClassDeclaration(path) {
-        const classNode = path.node;
+        const cls = path.node;
         const methods: MethodInfo[] = [];
         const properties: PropertyInfo[] = [];
 
-        classNode.body.body.forEach(member => {
+        cls.body.body.forEach(member => {
           if (t.isClassMethod(member)) {
             methods.push({
-              name: (member.key as any).name,
+              name: (member.key as any).name || 'anonymous',
               line: member.loc?.start.line || 0,
               endLine: member.loc?.end.line || 0,
               parameters: member.params.map(p => (p as any).name || 'param'),
               returnType: undefined,
               complexity: calculateFunctionComplexity(member),
-              visibility: member.kind as any
+              visibility: member.kind === 'get' || member.kind === 'set' ? 'public' : 
+                        (member as any).accessibility || 'public'
             });
           } else if (t.isClassProperty(member)) {
             properties.push({
-              name: (member.key as any).name,
+              name: (member.key as any).name || 'anonymous',
               line: member.loc?.start.line || 0,
               type: undefined,
-              visibility: 'public',
-              isStatic: member.static || false
+              visibility: (member as any).accessibility || 'public',
+              isStatic: (member as any).static || false
             });
           }
         });
 
         classes.push({
-          name: classNode.id?.name || 'anonymous',
-          line: classNode.loc?.start.line || 0,
-          endLine: classNode.loc?.end.line || 0,
+          name: cls.id?.name || 'anonymous',
+          line: cls.loc?.start.line || 0,
+          endLine: cls.loc?.end.line || 0,
           methods,
           properties,
-          extends: (classNode.superClass as any)?.name,
-          implements: [],
+          extends: cls.superClass ? (cls.superClass as any).name : undefined,
+          implements: cls.implements?.map(impl => (impl as any).name) || [],
           complexity: methods.reduce((sum, m) => sum + m.complexity, 0)
         });
       },
@@ -272,18 +397,18 @@ export class AnalysisEngine {
         const moduleName = importNode.source.value;
         dependencies.push(moduleName);
 
-        const imports: string[] = [];
+        const importNames: string[] = [];
         importNode.specifiers.forEach(specifier => {
           if (t.isImportSpecifier(specifier)) {
-            imports.push(specifier.local.name);
+            importNames.push(specifier.local.name);
           } else if (t.isImportDefaultSpecifier(specifier)) {
-            imports.push(specifier.local.name);
+            importNames.push(specifier.local.name);
           }
         });
 
         imports.push({
           module: moduleName,
-          imports,
+          imports: importNames,
           line: importNode.loc?.start.line || 0,
           isDefault: importNode.specifiers.some(s => t.isImportDefaultSpecifier(s))
         });

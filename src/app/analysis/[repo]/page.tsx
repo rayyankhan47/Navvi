@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Clock
 } from "lucide-react";
+import DependencyGraph from "../../../components/DependencyGraph";
 
 interface AnalysisData {
   repository: string;
@@ -59,134 +60,105 @@ export default function AnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [selectedComponentDetails, setSelectedComponentDetails] = useState<any>(null);
 
   useEffect(() => {
-    // For now, we'll use mock data since we haven't implemented the full analysis yet
-    // In production, this would fetch from the API
-    const mockAnalysis: AnalysisData = {
-      repository: params.repo as string,
-      files: [
-        {
-          path: "src/app/page.tsx",
-          language: "tsx",
-          size: 2048,
-          lines: 45,
-          functions: [
-            { name: "HomePage", complexity: 3, line: 10 }
-          ],
-          classes: [],
-          complexity: { cyclomatic: 3, cognitive: 2, halstead: 6, maintainability: 85 }
-        },
-        {
-          path: "src/lib/analysisEngine.ts",
-          language: "ts",
-          size: 8192,
-          lines: 120,
-          functions: [
-            { name: "analyzeRepository", complexity: 8, line: 25 },
-            { name: "buildArchitecture", complexity: 6, line: 45 }
-          ],
-          classes: [
-            { name: "AnalysisEngine", complexity: 12, line: 15 }
-          ],
-          complexity: { cyclomatic: 26, cognitive: 18, halstead: 52, maintainability: 65 }
-        }
-      ],
-      architecture: {
-        components: [
-          {
-            name: "app",
-            type: "page",
-            files: ["src/app/page.tsx", "src/app/layout.tsx"],
-            dependencies: ["react", "next"],
-            complexity: 5,
-            description: "Main application pages and layout",
-            patterns: ["Next.js App Router"]
-          },
-          {
-            name: "lib",
-            type: "service",
-            files: ["src/lib/analysisEngine.ts"],
-            dependencies: ["@babel/parser", "@babel/traverse"],
-            complexity: 26,
-            description: "Core analysis engine and utilities",
-            patterns: ["AST Parsing", "Complexity Analysis"]
-          }
-        ],
-        relationships: [
-          { from: "src/app/page.tsx", to: "src/lib/analysisEngine.ts", type: "imports", strength: 0.8 }
-        ],
-        layers: [
-          { name: "Presentation", components: ["app"], responsibility: "UI and user interaction" },
-          { name: "Business Logic", components: ["lib"], responsibility: "Core analysis functionality" }
-        ],
-        patterns: [
-          {
-            name: "Next.js App Router",
-            confidence: 0.9,
-            files: ["src/app/page.tsx", "src/app/layout.tsx"],
-            description: "Uses Next.js 13+ App Router for file-based routing"
-          }
-        ],
-        dataFlow: []
-      },
-      criticalPaths: [
-        {
-          name: "Analysis Engine",
-          files: ["src/lib/analysisEngine.ts"],
-          importance: 95,
-          complexity: 26,
-          description: "Core analysis functionality with high complexity",
-          businessLogic: ["AST parsing", "Complexity calculation", "Architecture analysis"]
-        }
-      ],
-      metrics: {
-        totalFiles: 2,
-        totalLines: 165,
-        languages: { "tsx": 1, "ts": 1 },
-        averageComplexity: 14.5,
-        maxComplexity: 26,
-        maintainabilityIndex: 75,
-        technicalDebt: 8
-      },
-      insights: {
-        architecturalStyle: "Full-Stack Application",
-        codeQuality: "Good",
-        complexityDistribution: "Moderate complexity, manageable",
-        potentialIssues: [
-          "High complexity in analysis engine - consider breaking down functions"
-        ],
-        recommendations: [
-          "Add unit tests for critical analysis functions",
-          "Consider splitting AnalysisEngine into smaller modules"
-        ],
-        learningPath: {
-          difficulty: "intermediate",
-          estimatedTime: 4,
-          modules: [
-            {
-              title: "Architecture Overview",
-              description: "Understand the overall structure",
-              files: ["src/app/page.tsx"],
-              concepts: ["Next.js App Router", "Component organization"],
-              estimatedTime: 30
+    const fetchAnalysisResults = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch the analysis results from the API
+        const response = await fetch(`/api/analysis/${params.repo}`);
+        
+        if (response.ok) {
+          const analysisData = await response.json();
+          setAnalysis(analysisData);
+        } else {
+          console.error('Failed to fetch analysis results');
+          // For now, fall back to mock data if API fails
+          // In production, you'd want to show an error state
+          const mockAnalysis: AnalysisData = {
+            repository: params.repo as string,
+            files: [],
+            architecture: {
+              components: [],
+              relationships: [],
+              layers: [],
+              patterns: [],
+              dataFlow: []
             },
-            {
-              title: "Core Analysis Engine",
-              description: "Learn about the analysis functionality",
-              files: ["src/lib/analysisEngine.ts"],
-              concepts: ["AST parsing", "Complexity metrics", "Code analysis"],
-              estimatedTime: 45
-            }
-          ],
-          prerequisites: ["Basic TypeScript knowledge", "Understanding of React"]
+            criticalPaths: [],
+            metrics: {
+              totalFiles: 0,
+              totalLines: 0,
+              languages: {},
+              averageComplexity: 0,
+              maxComplexity: 0,
+              maintainabilityIndex: 100,
+              technicalDebt: 0
+            },
+            insights: {
+              architecturalStyle: 'Unknown',
+              codeQuality: 'Unknown',
+              complexityDistribution: 'Analysis not available',
+              potentialIssues: ['Analysis failed to load'],
+              recommendations: ['Try analyzing the repository again'],
+              learningPath: {
+                difficulty: 'beginner',
+                estimatedTime: 0,
+                modules: [],
+                prerequisites: []
+              }
+            },
+            timestamp: new Date().toISOString()
+          };
+          setAnalysis(mockAnalysis);
         }
-      },
-      timestamp: new Date().toISOString()
+      } catch (error) {
+        console.error('Error fetching analysis results:', error);
+        // Fall back to empty analysis
+        const emptyAnalysis: AnalysisData = {
+          repository: params.repo as string,
+          files: [],
+          architecture: {
+            components: [],
+            relationships: [],
+            layers: [],
+            patterns: [],
+            dataFlow: []
+          },
+          criticalPaths: [],
+          metrics: {
+            totalFiles: 0,
+            totalLines: 0,
+            languages: {},
+            averageComplexity: 0,
+            maxComplexity: 0,
+            maintainabilityIndex: 100,
+            technicalDebt: 0
+          },
+          insights: {
+            architecturalStyle: 'Unknown',
+            codeQuality: 'Unknown',
+            complexityDistribution: 'Analysis not available',
+            potentialIssues: ['Failed to load analysis results'],
+            recommendations: ['Check your connection and try again'],
+            learningPath: {
+              difficulty: 'beginner',
+              estimatedTime: 0,
+              modules: [],
+              prerequisites: []
+            }
+          },
+          timestamp: new Date().toISOString()
+        };
+        setAnalysis(emptyAnalysis);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setAnalysis(mockAnalysis);
-    setLoading(false);
+    fetchAnalysisResults();
   }, [params.repo]);
 
   if (loading) {
@@ -235,6 +207,12 @@ export default function AnalysisPage() {
     if (complexity > 20) return 'text-red-400';
     if (complexity > 10) return 'text-yellow-400';
     return 'text-green-400';
+  };
+
+  const handleComponentSelect = (componentName: string) => {
+    setSelectedComponent(componentName);
+    const component = analysis.architecture.components.find(c => c.name === componentName);
+    setSelectedComponentDetails(component);
   };
 
   return (
@@ -386,6 +364,70 @@ export default function AnalysisPage() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
                 >
+                  {/* Dependency Graph */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Dependency Visualization</h3>
+                    <DependencyGraph 
+                      components={analysis.architecture.components}
+                      relationships={analysis.architecture.relationships}
+                      width={800}
+                      height={500}
+                    />
+                  </div>
+
+                  {/* Component Details Panel */}
+                  {selectedComponentDetails && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold mb-4 text-white">Component Details: {selectedComponentDetails.name}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-semibold text-blue-400 mb-2">Overview</h4>
+                          <div className="space-y-2 text-sm">
+                            <div><span className="text-gray-400">Type:</span> <span className="text-white">{selectedComponentDetails.type}</span></div>
+                            <div><span className="text-gray-400">Files:</span> <span className="text-white">{selectedComponentDetails.files.length}</span></div>
+                            <div><span className="text-gray-400">Complexity:</span> <span className={getComplexityColor(selectedComponentDetails.complexity)}>{selectedComponentDetails.complexity}</span></div>
+                            <div><span className="text-gray-400">Description:</span> <span className="text-white">{selectedComponentDetails.description}</span></div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-400 mb-2">Dependencies</h4>
+                          <div className="space-y-2">
+                            <div className="text-sm">
+                              <span className="text-gray-400">Dependencies ({selectedComponentDetails.dependencies.length}):</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {selectedComponentDetails.dependencies.map((dep: string, index: number) => (
+                                  <span key={index} className="px-2 py-1 bg-white/10 text-white rounded text-xs">
+                                    {dep}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="text-sm">
+                              <span className="text-gray-400">Patterns ({selectedComponentDetails.patterns.length}):</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {selectedComponentDetails.patterns.map((pattern: string, index: number) => (
+                                  <span key={index} className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                                    {pattern}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <h4 className="font-semibold text-blue-400 mb-2">Files</h4>
+                        <div className="space-y-1">
+                          {selectedComponentDetails.files.map((file: string, index: number) => (
+                            <div key={index} className="text-sm text-gray-300 font-mono">
+                              {file}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Components */}
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Components</h3>
@@ -398,7 +440,7 @@ export default function AnalysisPage() {
                               ? 'border-blue-500 bg-blue-500/10'
                               : 'border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10'
                           }`}
-                          onClick={() => setSelectedComponent(component.name)}
+                          onClick={() => handleComponentSelect(component.name)}
                           whileHover={{ y: -2 }}
                         >
                           <div className="flex items-center justify-between">
