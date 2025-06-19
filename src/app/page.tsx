@@ -50,7 +50,7 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
 
   return (
     <motion.div
-      className="absolute text-xs text-blue-400/30 font-mono pointer-events-none"
+      className="absolute text-xs text-lime-400/30 font-mono pointer-events-none"
       initial={{ opacity: 0, scale: 0 }}
       animate={{ 
         opacity: [0, 1, 0], 
@@ -116,7 +116,7 @@ const AnalysisDemo = () => {
           <motion.div
             key={index}
             className={`text-sm transition-colors ${
-              index === currentStep ? 'text-blue-400' : 'text-gray-500'
+              index === currentStep ? 'text-lime-400' : 'text-gray-500'
             }`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ 
@@ -215,7 +215,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">N</span>
               </div>
               <span className="text-xl font-bold">Navvi</span>
@@ -250,7 +250,7 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
           >
             <motion.h1 
-              className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent"
+              className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-lime-100 to-green-100 bg-clip-text text-transparent"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.2 }}
@@ -278,7 +278,7 @@ export default function HomePage() {
             >
               <Link 
                 href="/auth/signin"
-                className="group bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                className="group bg-gradient-to-r from-lime-500 to-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-lime-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
               >
                 <span>Start Analyzing</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -422,7 +422,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
               <Link 
                 href="/auth/signin"
-                className="group bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
+                className="group bg-gradient-to-r from-lime-500 to-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-lime-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
               >
                 <span>Get Started Free</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -445,7 +445,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">N</span>
               </div>
               <span className="text-lg font-bold">Navvi</span>

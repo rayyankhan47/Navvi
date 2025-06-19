@@ -127,7 +127,7 @@ html {
 
 /* Button styles */
 .btn-primary {
-  @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black;
+  @apply bg-gradient-to-r from-lime-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-lime-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 focus:ring-offset-black;
 }
 
 .btn-secondary {

@@ -57,13 +57,13 @@ class ShoppingCart {
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2 group">
                 <motion.div 
-                  className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center"
+                  className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <span className="text-white font-bold text-lg">N</span>
                 </motion.div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-lime-400 to-green-400 bg-clip-text text-transparent">
                   Navvi
                 </span>
               </Link>
@@ -90,7 +90,7 @@ class ShoppingCart {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-lime-400 via-green-400 to-emerald-400 bg-clip-text text-transparent">
             Security Proof: Your Code Never Leaves Your Browser
           </h1>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
@@ -169,13 +169,13 @@ class ShoppingCart {
             <textarea
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value)}
-              className="w-full h-64 p-4 border border-gray-700 rounded-lg font-mono text-sm bg-black/50 text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full h-64 p-4 border border-gray-700 rounded-lg font-mono text-sm bg-black/50 text-gray-200 placeholder-gray-500 focus:border-lime-500 focus:ring-1 focus:ring-lime-500 transition-all"
               placeholder="Paste your code here to see how we analyze it locally..."
             />
             <motion.button
               onClick={handleAnalyze}
               disabled={isAnalyzing}
-              className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center disabled:opacity-50"
+              className="mt-4 px-6 py-3 bg-gradient-to-r from-lime-600 to-green-600 text-white rounded-lg hover:from-lime-700 hover:to-green-700 transition-all duration-200 flex items-center justify-center disabled:opacity-50"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -219,7 +219,7 @@ class ShoppingCart {
                 </div>
                 
                 <div>
-                  <h4 className="font-semibold mb-2 text-blue-400">Functions Found</h4>
+                  <h4 className="font-semibold mb-2 text-lime-400">Functions Found</h4>
                   <div className="space-y-2">
                     {analysis.functions.map((func: any, index: number) => (
                       <motion.div 
@@ -229,7 +229,7 @@ class ShoppingCart {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <span className="font-mono text-blue-300">{func.name}</span> 
+                        <span className="font-mono text-lime-300">{func.name}</span> 
                         <span className="text-gray-400"> (Line {func.line}, Complexity: {func.complexity})</span>
                       </motion.div>
                     ))}
