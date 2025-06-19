@@ -33,6 +33,7 @@ export class AnalysisEngine {
   private git: SimpleGit;
   private tempDir: string;
   private accessToken?: string;
+  private repoRoot: string = '';
 
   constructor(config: AnalysisConfig = {
     languages: ['javascript', 'typescript', 'jsx', 'tsx'],
@@ -75,6 +76,7 @@ export class AnalysisEngine {
       // Generate unique directory name for this analysis
       const repoName = this.extractRepoName(repoUrl);
       const analysisDir = path.join(this.tempDir, `${repoName}-${Date.now()}`);
+      this.repoRoot = analysisDir;
       
       this.updateProgress('cloning', 20, `Cloning ${repoName}...`);
       
@@ -101,7 +103,8 @@ export class AnalysisEngine {
       
       // Scan for files to analyze
       const files = await this.scanFiles(analysisDir);
-      console.log(`Found ${files.length} files to analyze`);
+      console.log(`[scanFiles] Found ${files.length} files to analyze:`);
+      files.forEach(f => console.log('  -', this.toRepoPath(f)));
       
       if (files.length === 0) {
         console.warn('No supported files found in repository');
@@ -154,10 +157,12 @@ export class AnalysisEngine {
         try {
           const analysis = await this.analyzeFile(file);
           if (analysis) {
+            // Normalize file path to repo-relative immediately
+            analysis.path = this.toRepoPath(analysis.path);
             fileAnalyses.push(analysis);
           }
         } catch (fileError) {
-          console.warn(`Failed to analyze file ${file}:`, fileError);
+          console.warn(`[AST] Failed to analyze file ${this.toRepoPath(file)}:`, fileError);
           // Continue with other files instead of failing completely
         }
       }
@@ -223,8 +228,14 @@ export class AnalysisEngine {
     }
   }
 
+  private toRepoPath(absPath: string): string {
+    if (!this.repoRoot) return absPath;
+    return absPath.replace(this.repoRoot + path.sep, '').replace(/\\/g, '/');
+  }
+
   private async scanFiles(dir: string): Promise<string[]> {
     const files: string[] = [];
+    const ignoredDirs: string[] = [];
     
     const scanDirectory = async (currentDir: string) => {
       const items = await fs.promises.readdir(currentDir);
@@ -235,18 +246,23 @@ export class AnalysisEngine {
         
         if (stat.isDirectory()) {
           const shouldIgnore = this.config.ignorePatterns.some(pattern => 
-            item.includes(pattern) || fullPath.includes(pattern)
+            item === pattern || fullPath.includes(pattern)
           );
-          
+          if (shouldIgnore) {
+            ignoredDirs.push(fullPath);
+            console.log(`[scanFiles] Ignoring directory: ${fullPath}`);
+          }
           if (!shouldIgnore) {
             await scanDirectory(fullPath);
           }
         } else if (stat.isFile()) {
           const ext = path.extname(item).toLowerCase();
           const isSupported = this.isSupportedFile(ext);
-          
           if (isSupported && stat.size <= this.config.maxFileSize) {
             files.push(fullPath);
+          } else if (!isSupported) {
+            // Log skipped file extensions for debugging
+            // console.log(`[scanFiles] Skipping unsupported file: ${fullPath}`);
           }
         }
       }
@@ -257,7 +273,8 @@ export class AnalysisEngine {
   }
 
   private isSupportedFile(ext: string): boolean {
-    const supportedExtensions = ['.js', '.ts', '.jsx', '.tsx'];
+    // Add more extensions if needed
+    const supportedExtensions = ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs'];
     return supportedExtensions.includes(ext);
   }
 
@@ -266,15 +283,24 @@ export class AnalysisEngine {
       const content = await fs.promises.readFile(filePath, 'utf-8');
       const ext = path.extname(filePath).toLowerCase();
       
-      if (ext === '.js' || ext === '.jsx') {
-        return this.analyzeJavaScriptFile(filePath, content);
+      if (ext === '.js' || ext === '.jsx' || ext === '.mjs' || ext === '.cjs') {
+        try {
+          return this.analyzeJavaScriptFile(filePath, content);
+        } catch (err) {
+          console.warn(`[AST] Failed to parse JS file ${this.toRepoPath(filePath)}:`, err);
+          return null;
+        }
       } else if (ext === '.ts' || ext === '.tsx') {
-        return this.analyzeTypeScriptFile(filePath, content);
+        try {
+          return this.analyzeTypeScriptFile(filePath, content);
+        } catch (err) {
+          console.warn(`[AST] Failed to parse TS file ${this.toRepoPath(filePath)}:`, err);
+          return null;
+        }
       }
-      
       return null;
     } catch (error) {
-      console.warn(`Failed to read file ${filePath}:`, error);
+      console.warn(`[IO] Failed to read file ${this.toRepoPath(filePath)}:`, error);
       return null;
     }
   }
@@ -480,32 +506,29 @@ export class AnalysisEngine {
   private identifyComponents(files: FileAnalysis[]): ComponentAnalysis[] {
     const components: ComponentAnalysis[] = [];
 
-    // Group files by directory structure
+    // Group files by top-level folder (e.g., app, components, lib, types)
     const fileGroups = new Map<string, string[]>();
-    
     files.forEach(file => {
-      const dir = path.dirname(file.path);
-      const group = fileGroups.get(dir) || [];
-      group.push(file.path);
-      fileGroups.set(dir, group);
+      const relPath = file.path;
+      const topLevel = relPath.split('/')[0];
+      const group = fileGroups.get(topLevel) || [];
+      group.push(relPath);
+      fileGroups.set(topLevel, group);
     });
 
-    fileGroups.forEach((filePaths, dir) => {
-      const dirName = path.basename(dir);
+    fileGroups.forEach((filePaths, topLevel) => {
       const componentFiles = files.filter(f => filePaths.includes(f.path));
-      
-      const type = this.determineComponentType(dirName, componentFiles);
+      const type = this.determineComponentType(topLevel, componentFiles);
       const dependencies = this.extractDependencies(componentFiles);
       const complexity = componentFiles.reduce((sum, f) => sum + f.complexity.cyclomatic, 0);
-      
       components.push({
-        name: dirName,
+        name: topLevel,
         type,
         files: filePaths,
         dependencies,
         dependents: [],
         complexity,
-        description: this.generateComponentDescription(dirName, componentFiles),
+        description: this.generateComponentDescription(topLevel, componentFiles),
         patterns: this.detectComponentPatterns(componentFiles)
       });
     });
@@ -558,28 +581,71 @@ export class AnalysisEngine {
   private buildRelationships(files: FileAnalysis[], components: ComponentAnalysis[]): Relationship[] {
     const relationships: Relationship[] = [];
 
-    // Build import relationships
+    // Map file path to component name (top-level folder)
+    const fileToComponent = new Map<string, string>();
+    components.forEach(comp => {
+      comp.files.forEach(f => fileToComponent.set(f, comp.name));
+    });
+
+    // Only consider repo-internal imports (not node_modules or external packages)
+    const isInternalImport = (module: string) =>
+      module.startsWith('.') || module.startsWith('/') || files.some(f => f.path.endsWith(module) || f.path.includes(module));
+
+    // Build import relationships between components
     files.forEach(file => {
+      const fromComponent = fileToComponent.get(file.path);
       file.imports.forEach(imp => {
-        relationships.push({
-          from: file.path,
-          to: imp.module,
-          type: 'imports',
-          strength: 0.8
+        if (typeof imp.module !== 'string') return;
+        if (!isInternalImport(imp.module)) return; // skip external deps
+        // Try to resolve import to a file in the repo
+        const importedFile = files.find(f => {
+          if (typeof f.path !== 'string') return false;
+          if (typeof imp.module !== 'string') return false;
+          return (
+            f.path === imp.module ||
+            f.path.endsWith(imp.module) ||
+            f.path.includes(imp.module) ||
+            (f.path.split('/').pop() === imp.module.split('/').pop())
+          );
         });
+        const toComponent = importedFile ? fileToComponent.get(importedFile.path) : undefined;
+        if (typeof fromComponent === 'string' && typeof toComponent === 'string' && fromComponent !== toComponent) {
+          relationships.push({
+            from: fromComponent,
+            to: toComponent,
+            type: 'imports',
+            strength: 0.8
+          });
+          console.log(`[relationships] ${fromComponent} imports ${toComponent}`);
+        }
       });
     });
 
-    // Build inheritance relationships
+    // Build inheritance relationships between components (internal only)
     files.forEach(file => {
+      const fromComponent = fileToComponent.get(file.path);
       file.classes.forEach(cls => {
-        if (cls.extends) {
+        if (typeof cls.extends !== 'string') return;
+        // Only consider internal extends
+        const extendedFile = files.find(f => {
+          if (typeof f.path !== 'string') return false;
+          if (typeof cls.extends !== 'string') return false;
+          return (
+            f.path === cls.extends ||
+            f.path.endsWith(cls.extends) ||
+            f.path.includes(cls.extends) ||
+            (f.path.split('/').pop() === cls.extends.split('/').pop())
+          );
+        });
+        const toComponent = extendedFile ? fileToComponent.get(extendedFile.path) : undefined;
+        if (typeof fromComponent === 'string' && typeof toComponent === 'string' && fromComponent !== toComponent) {
           relationships.push({
-            from: file.path,
-            to: cls.extends,
+            from: fromComponent,
+            to: toComponent,
             type: 'extends',
             strength: 0.9
           });
+          console.log(`[relationships] ${fromComponent} extends ${toComponent}`);
         }
       });
     });
@@ -861,24 +927,42 @@ export class AnalysisEngine {
 // Helper functions for complexity calculation
 function calculateFunctionComplexity(node: any): number {
   let complexity = 1; // Base complexity
-  
-  traverse(node, {
-    IfStatement() { complexity++; },
-    SwitchCase() { complexity++; },
-    ForStatement() { complexity++; },
-    ForInStatement() { complexity++; },
-    ForOfStatement() { complexity++; },
-    WhileStatement() { complexity++; },
-    DoWhileStatement() { complexity++; },
-    CatchClause() { complexity++; },
-    ConditionalExpression() { complexity++; },
-    LogicalExpression(path) {
-      if (path.node.operator === '&&' || path.node.operator === '||') {
+
+  function walk(n: any) {
+    if (!n || typeof n !== 'object') return;
+    switch (n.type) {
+      case 'IfStatement':
+      case 'ForStatement':
+      case 'ForInStatement':
+      case 'ForOfStatement':
+      case 'WhileStatement':
+      case 'DoWhileStatement':
+      case 'SwitchCase':
+      case 'CatchClause':
+      case 'ConditionalExpression':
         complexity++;
+        break;
+      case 'LogicalExpression':
+        if (n.operator === '&&' || n.operator === '||') complexity++;
+        break;
+    }
+    // Recursively walk all child nodes
+    for (const key in n) {
+      if (n.hasOwnProperty(key)) {
+        const child = n[key];
+        if (Array.isArray(child)) {
+          child.forEach(walk);
+        } else if (typeof child === 'object' && child !== null && child.type) {
+          walk(child);
+        }
       }
     }
-  });
-  
+  }
+
+  // Walk the function body
+  if (node.body) {
+    walk(node.body);
+  }
   return complexity;
 }
 

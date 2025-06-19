@@ -5,10 +5,7 @@ import { analysisResults } from "../../analyze/route";
 
 // In a real application, you'd store analysis results in a database
 // For now, we'll return a placeholder response
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { repo: string } }
-) {
+export async function GET(request: NextRequest, context: { params: { repo: string } }) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -16,6 +13,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const params = await context.params;
     const repoName = params.repo.replace(/-/g, '/');
     
     console.log(`Fetching analysis results for repository: ${repoName}`);

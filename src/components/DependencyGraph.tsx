@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { ComponentAnalysis, Relationship } from '../types/analysis';
-import { Search, ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react';
+import { Search, ZoomIn, ZoomOut, RotateCcw, Download, Info, Maximize2, X } from 'lucide-react';
+import path from 'path';
 
 interface DependencyGraphProps {
   components: ComponentAnalysis[];
@@ -22,11 +23,35 @@ export default function DependencyGraph({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [showUnconnected, setShowUnconnected] = useState(false);
+  const [fullScreen, setFullScreen] = useState(false);
+
+  // Helper to get a more descriptive node label
+  const getNodeLabel = (node: any) => {
+    if (node.files && node.files.length > 0) {
+      const file = node.files[0];
+      return `${node.name} (${file})`;
+    }
+    return node.name;
+  };
+
+  // Handle Esc key to exit full screen
+  useEffect(() => {
+    if (!fullScreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFullScreen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fullScreen]);
+
+  // Responsive sizing for full screen
+  const graphWidth = fullScreen ? window.innerWidth : width;
+  const graphHeight = fullScreen ? window.innerHeight : height;
 
   useEffect(() => {
     if (!svgRef.current || components.length === 0) return;
 
-    // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
 
     // Create nodes from components
@@ -35,7 +60,7 @@ export default function DependencyGraph({
       name: comp.name,
       type: comp.type,
       complexity: comp.complexity,
-      files: comp.files.length,
+      files: comp.files,
       description: comp.description
     }));
 
@@ -43,8 +68,10 @@ export default function DependencyGraph({
     const links = relationships
       .filter(rel => rel.type === 'imports')
       .map(rel => ({
-        source: rel.from.split('/').pop()?.replace('.ts', '').replace('.js', '') || rel.from,
-        target: rel.to.split('/').pop()?.replace('.ts', '').replace('.js', '') || rel.to,
+        source: rel.from,
+        target: rel.to,
+        fullSource: rel.from,
+        fullTarget: rel.to,
         strength: rel.strength
       }))
       .filter(link => 
@@ -52,15 +79,20 @@ export default function DependencyGraph({
         nodes.some(n => n.id === link.target)
       );
 
-    // Filter nodes based on search and type
+    // Filter nodes based on search, type, and connectivity
+    const connectedNodeIds = new Set<string>();
+    links.forEach(link => {
+      connectedNodeIds.add(link.source);
+      connectedNodeIds.add(link.target);
+    });
     const filteredNodes = nodes.filter(node => {
       const matchesSearch = searchTerm === '' || 
         node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         node.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = selectedType === 'all' || node.type === selectedType;
-      return matchesSearch && matchesType;
+      const isConnected = connectedNodeIds.has(node.id);
+      return matchesSearch && matchesType && (showUnconnected || isConnected);
     });
-
     const filteredLinks = links.filter(link => 
       filteredNodes.some(n => n.id === link.source) && 
       filteredNodes.some(n => n.id === link.target)
@@ -68,8 +100,8 @@ export default function DependencyGraph({
 
     // Create SVG
     const svg = d3.select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height);
+      .attr('width', graphWidth)
+      .attr('height', graphHeight);
 
     // Create zoom behavior
     const zoom = d3.zoom()
@@ -78,17 +110,14 @@ export default function DependencyGraph({
         container.attr('transform', event.transform);
         setZoomLevel(event.transform.k);
       });
-
     svg.call(zoom as any);
-
-    // Create container for zoom
     const container = svg.append('g');
 
     // Create force simulation
     const simulation = d3.forceSimulation(filteredNodes as any)
-      .force('link', d3.forceLink(filteredLinks).id((d: any) => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('link', d3.forceLink(filteredLinks).id((d: any) => d.id).distance(120))
+      .force('charge', d3.forceManyBody().strength(-350))
+      .force('center', d3.forceCenter(graphWidth / 2, graphHeight / 2))
       .force('collision', d3.forceCollide().radius(50));
 
     // Create links
@@ -99,7 +128,27 @@ export default function DependencyGraph({
       .append('line')
       .attr('stroke', '#84CC16')
       .attr('stroke-width', 2)
-      .attr('stroke-opacity', 0.6);
+      .attr('stroke-opacity', 0.6)
+      .on('mouseover', function(event, d: any) {
+        // Show edge tooltip
+        const tooltip = d3.select('body').append('div')
+          .attr('class', 'tooltip')
+          .style('position', 'absolute')
+          .style('background', 'rgba(0, 0, 0, 0.95)')
+          .style('color', 'white')
+          .style('padding', '8px')
+          .style('border-radius', '5px')
+          .style('font-size', '12px')
+          .style('pointer-events', 'none')
+          .style('z-index', '1000')
+          .style('border', '1px solid #84CC16');
+        tooltip.html(`<div><strong>${d.source}</strong> imports <strong>${d.target}</strong></div>`);
+        tooltip.style('left', (event.pageX + 10) + 'px')
+               .style('top', (event.pageY - 10) + 'px');
+      })
+      .on('mouseout', function() {
+        d3.selectAll('.tooltip').remove();
+      });
 
     // Create nodes
     const node = container.append('g')
@@ -114,7 +163,7 @@ export default function DependencyGraph({
 
     // Add circles to nodes
     node.append('circle')
-      .attr('r', (d: any) => Math.max(20, Math.min(40, d.files * 3)))
+      .attr('r', (d: any) => Math.max(20, Math.min(40, d.files.length * 3)))
       .attr('fill', (d: any) => {
         const colors = {
           component: '#84CC16',
@@ -131,9 +180,8 @@ export default function DependencyGraph({
       .on('mouseover', function(event, d: any) {
         // Highlight connected links
         link.attr('stroke-opacity', (l: any) => 
-          l.source.id === d.id || l.target.id === d.id ? 1 : 0.1
+          l.source === d.id || l.target === d.id ? 1 : 0.1
         );
-        
         // Show tooltip
         const tooltip = d3.select('body').append('div')
           .attr('class', 'tooltip')
@@ -146,29 +194,24 @@ export default function DependencyGraph({
           .style('pointer-events', 'none')
           .style('z-index', '1000')
           .style('border', '1px solid #84CC16');
-
         tooltip.html(`
-          <div><strong>${d.name}</strong></div>
+          <div><strong>${getNodeLabel(d)}</strong></div>
           <div>Type: ${d.type}</div>
-          <div>Files: ${d.files}</div>
+          <div>Files: ${d.files.length}</div>
           <div>Complexity: ${d.complexity}</div>
           <div style="max-width: 200px; margin-top: 5px;">${d.description}</div>
         `);
-
         tooltip.style('left', (event.pageX + 10) + 'px')
                .style('top', (event.pageY - 10) + 'px');
       })
       .on('mouseout', function() {
-        // Reset link opacity
         link.attr('stroke-opacity', 0.6);
-        
-        // Remove tooltip
         d3.selectAll('.tooltip').remove();
       });
 
     // Add labels to nodes
     node.append('text')
-      .text((d: any) => d.name)
+      .text((d: any) => getNodeLabel(d))
       .attr('text-anchor', 'middle')
       .attr('dy', '.35em')
       .attr('fill', '#ffffff')
@@ -185,42 +228,35 @@ export default function DependencyGraph({
       .attr('font-size', '10px')
       .style('pointer-events', 'none');
 
-    // Update positions on simulation tick
     simulation.on('tick', () => {
       link
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
         .attr('x2', (d: any) => d.target.x)
         .attr('y2', (d: any) => d.target.y);
-
       node
         .attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
-    // Drag functions
     function dragstarted(event: any, d: any) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
-
     function dragged(event: any, d: any) {
       d.fx = event.x;
       d.fy = event.y;
     }
-
     function dragended(event: any, d: any) {
       if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
     }
-
-    // Cleanup
     return () => {
       simulation.stop();
       d3.selectAll('.tooltip').remove();
     };
-  }, [components, relationships, width, height, searchTerm, selectedType]);
+  }, [components, relationships, graphWidth, graphHeight, searchTerm, selectedType, showUnconnected]);
 
   const handleZoomIn = () => {
     if (svgRef.current) {
@@ -230,7 +266,6 @@ export default function DependencyGraph({
       );
     }
   };
-
   const handleZoomOut = () => {
     if (svgRef.current) {
       const zoom = d3.zoom().scaleExtent([0.1, 4]);
@@ -239,7 +274,6 @@ export default function DependencyGraph({
       );
     }
   };
-
   const handleReset = () => {
     if (svgRef.current) {
       d3.select(svgRef.current).transition().call(
@@ -247,14 +281,12 @@ export default function DependencyGraph({
       );
     }
   };
-
   const handleExport = () => {
     if (svgRef.current) {
       const svgElement = svgRef.current;
       const svgData = new XMLSerializer().serializeToString(svgElement);
       const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
       const svgUrl = URL.createObjectURL(svgBlob);
-      
       const downloadLink = document.createElement('a');
       downloadLink.href = svgUrl;
       downloadLink.download = 'dependency-graph.svg';
@@ -264,7 +296,6 @@ export default function DependencyGraph({
       URL.revokeObjectURL(svgUrl);
     }
   };
-
   const componentTypes = ['all', ...Array.from(new Set(components.map(c => c.type)))];
 
   if (components.length === 0) {
@@ -275,10 +306,85 @@ export default function DependencyGraph({
     );
   }
 
+  // Full screen modal overlay
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-95 flex flex-col items-center justify-center transition-all">
+        <div className="absolute top-4 right-4 z-60">
+          <button
+            onClick={() => setFullScreen(false)}
+            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+            title="Exit Full Screen"
+            autoFocus
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+        </div>
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <svg ref={svgRef} className="border border-white/10 rounded-lg" style={{ width: '100vw', height: '100vh' }}></svg>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white/5 rounded-lg border border-white/10 p-4">
+    <div className="bg-white/5 rounded-lg border border-white/10 p-4 relative">
+      {/* How to read this graph */}
+      <div className="mb-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-lime-400 mt-1" />
+        <div>
+          <div className="font-semibold text-white">How to read this graph</div>
+          <div className="text-gray-300 text-sm mt-1">
+            <ul className="list-disc ml-5">
+              <li><b>Nodes</b> represent components, services, pages, or utilities (grouped by directory).</li>
+              <li><b>Edges</b> (lines) show <b>import relationships</b> (A imports B).</li>
+              <li>Hover over a node for details, or an edge to see which file imports which.</li>
+              <li>Use the search and filter controls to focus on specific parts of your codebase.</li>
+              <li>Unconnected nodes are hidden by default (toggle to show them).</li>
+              <li>Click the <Maximize2 className="inline w-4 h-4" /> button to expand the graph to full screen.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      {/* Legend and controls */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">Dependency Graph</h3>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
+              <span>Component</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+              <span>Service</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span>Utility</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+              <span>Page</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-300 rounded-full"></div>
+              <span>API</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 border-2 border-lime-400 rounded-full"></div>
+              <span>Edge: Import relationship</span>
+            </div>
+          </div>
+          <label className="flex items-center gap-2 ml-6 text-gray-400 text-sm">
+            <input
+              type="checkbox"
+              checked={showUnconnected}
+              onChange={() => setShowUnconnected(v => !v)}
+              className="accent-lime-500"
+            />
+            Show unconnected nodes
+          </label>
+        </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={handleZoomIn}
@@ -308,9 +414,15 @@ export default function DependencyGraph({
           >
             <Download className="w-4 h-4 text-white" />
           </button>
+          <button
+            onClick={() => setFullScreen(true)}
+            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+            title="Expand to Full Screen"
+          >
+            <Maximize2 className="w-4 h-4 text-white" />
+          </button>
         </div>
       </div>
-
       {/* Search and Filter Controls */}
       <div className="flex items-center space-x-4 mb-4">
         <div className="relative flex-1">
@@ -335,37 +447,12 @@ export default function DependencyGraph({
           ))}
         </select>
       </div>
-
       {/* Zoom Level Indicator */}
       <div className="text-sm text-gray-400 mb-4">
         Zoom: {Math.round(zoomLevel * 100)}%
       </div>
-
       <div className="flex justify-center">
         <svg ref={svgRef} className="border border-white/10 rounded-lg"></svg>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-400">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-lime-500 rounded-full"></div>
-          <span>Component</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-          <span>Service</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span>Utility</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-          <span>Page</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-300 rounded-full"></div>
-          <span>API</span>
-        </div>
       </div>
     </div>
   );
