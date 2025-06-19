@@ -221,6 +221,9 @@ export default function HomePage() {
               <span className="text-xl font-bold">Navvi</span>
             </div>
             <div className="flex items-center space-x-6">
+              <Link href="/security" className="text-gray-300 hover:text-white transition-colors">
+                Security
+              </Link>
               <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors">
                 Sign In
               </Link>
