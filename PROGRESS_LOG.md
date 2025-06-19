@@ -30,6 +30,13 @@
 - **Professional typography** and spacing
 - **Hydration-safe** client components
 
+### Phase 3.5: Design Polish & Color Scheme ✅ COMPLETE
+- **Lime green color scheme** - Updated from blue-purple to lime-green gradient
+- **Consistent branding** across all pages and components
+- **Enhanced animations** with easeInOut easing for smoother feel
+- **Security demo restoration** with new dark theme design
+- **Navigation improvements** with Security link added
+
 ## 🏗️ Architecture
 
 ### Core Components
@@ -46,10 +53,11 @@
    - Progress tracking types
 
 3. **UI Components**
-   - **Landing Page**: Linear-inspired with floating particles
+   - **Landing Page**: Linear-inspired with floating particles and lime green theme
    - **Dashboard**: Repository selection with search
    - **Analysis Results**: Multi-tab interface with real data
    - **Progress Modal**: Real-time analysis tracking
+   - **Security Demo**: Live code analysis with zero-knowledge proof
 
 ### API Endpoints
 - `/api/auth/[...nextauth]` - GitHub OAuth
@@ -59,7 +67,7 @@
 ## 🎨 Design System
 
 ### Color Palette
-- **Primary**: Blue (#3B82F6) to Purple (#8B5CF6)
+- **Primary**: Lime (#84CC16) to Green (#16A34A) gradient
 - **Background**: Black (#000000)
 - **Text**: White (#FFFFFF) and Gray variants
 - **Accents**: Green, Orange, Pink for different metrics
@@ -70,10 +78,11 @@
 - **Body**: Clean, readable with proper line height
 
 ### Animations
-- **Framer Motion** for smooth transitions
+- **Framer Motion** with easeInOut easing for smooth transitions
 - **Micro-interactions** on hover and focus
 - **Parallax scrolling** effects
 - **Floating particles** with random positioning
+- **Longer durations** (1-1.2s) for natural movement
 
 ## 🔧 Technical Implementation
 
@@ -99,6 +108,7 @@
 4. **Interactive UI** - Smooth animations and micro-interactions
 5. **Progress Tracking** - Real-time analysis updates
 6. **Responsive Design** - Works on all devices
+7. **Security Demo** - Live proof of zero-knowledge architecture
 
 ## 📊 Current Status
 
@@ -111,6 +121,10 @@
 - [x] Analysis results page with tabs
 - [x] Progress tracking modal
 - [x] Hydration-safe client components
+- [x] Lime green color scheme implementation
+- [x] Security demo page restoration
+- [x] Animation improvements with easeInOut
+- [x] Git repository setup and backup
 
 ### 🚧 In Progress
 - [ ] Real repository cloning and analysis
@@ -145,6 +159,7 @@
 ### Design Philosophy
 - **Linear-inspired** but with our own twist
 - **Dark theme** for developer preference
+- **Lime green branding** for fresh, energetic feel
 - **Smooth animations** for premium feel
 - **Glassmorphism** for modern aesthetic
 
@@ -167,7 +182,11 @@
 
 ### Design Consistency ✅ FIXED
 - **Problem**: Inconsistent color scheme
-- **Solution**: Established comprehensive design system
+- **Solution**: Established comprehensive lime green design system
+
+### Animation Polish ✅ IMPROVED
+- **Problem**: Snappy animation endings
+- **Solution**: Implemented easeInOut easing with longer durations
 
 ## 💡 Future Enhancements
 
@@ -200,9 +219,10 @@
 ### Key Files to Reference:
 - `src/types/analysis.ts` - Type definitions
 - `src/lib/analysisEngine.ts` - Core analysis logic
-- `src/app/page.tsx` - Landing page
+- `src/app/page.tsx` - Landing page with lime green theme
 - `src/app/dashboard/page.tsx` - Dashboard
 - `src/app/analysis/[repo]/page.tsx` - Results page
+- `src/app/security/page.tsx` - Security demo
 
 ### Development Commands:
 ```bash
@@ -211,8 +231,14 @@ npm run build        # Build for production
 npm run lint         # Run ESLint
 ```
 
+### Git Repository:
+- **Remote**: https://github.com/rayyankhan47/Navvi
+- **Last Commit**: Animation improvements and lime green theme
+- **Status**: All changes committed and pushed
+
 ---
 
 **Last Updated**: [Current Date]
-**Session Duration**: ~4 hours
-**Next Session Goal**: Phase 2 - Interactive Visualizations 
+**Session Duration**: ~5 hours
+**Next Session Goal**: Phase 2 - Interactive Visualizations
+**Current Theme**: Lime green with smooth easeInOut animations 
