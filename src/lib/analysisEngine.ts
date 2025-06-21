@@ -8,8 +8,6 @@ import fs from 'fs';
 import path from 'path';
 import { simpleGit, SimpleGit } from 'simple-git';
 import os from 'os';
-import TreeSitter, { Query } from 'tree-sitter';
-import Python from 'tree-sitter-python';
 import {
   FileAnalysis,
   FunctionInfo,
@@ -36,11 +34,9 @@ export class AnalysisEngine {
   private tempDir: string;
   private accessToken?: string;
   private repoRoot: string = '';
-  private tsParser: TreeSitter;
-  private pythonParser: TreeSitter;
 
   constructor(config: AnalysisConfig = {
-    languages: ['javascript', 'typescript', 'jsx', 'tsx', 'python'],
+    languages: ['javascript', 'typescript', 'jsx', 'tsx'],
     maxFileSize: 1024 * 1024, // 1MB
     ignorePatterns: ['node_modules', '.git', 'dist', 'build'],
     complexityThreshold: 10,
@@ -51,11 +47,6 @@ export class AnalysisEngine {
     this.git = simpleGit();
     this.tempDir = path.join(os.tmpdir(), 'navvi-analysis');
     this.accessToken = accessToken;
-
-    this.tsParser = new TreeSitter();
-    
-    this.pythonParser = new TreeSitter();
-    this.pythonParser.setLanguage(Python as any);
   }
 
   setProgressCallback(callback: (progress: AnalysisProgress) => void) {
@@ -265,9 +256,13 @@ export class AnalysisEngine {
             await scanDirectory(fullPath);
           }
         } else if (stat.isFile()) {
-          const ext = path.extname(item).substring(1);
-          if (this.isSupportedFile(ext)) {
+          const ext = path.extname(item).toLowerCase();
+          const isSupported = this.isSupportedFile(ext);
+          if (isSupported && stat.size <= this.config.maxFileSize) {
             files.push(fullPath);
+          } else if (!isSupported) {
+            // Log skipped file extensions for debugging
+            // console.log(`[scanFiles] Skipping unsupported file: ${fullPath}`);
           }
         }
       }
@@ -278,185 +273,36 @@ export class AnalysisEngine {
   }
 
   private isSupportedFile(ext: string): boolean {
-    return this.config.languages.includes(ext.replace('.', ''));
+    // Add more extensions if needed
+    const supportedExtensions = ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs'];
+    return supportedExtensions.includes(ext);
   }
 
   private async analyzeFile(filePath: string): Promise<FileAnalysis | null> {
-    const fileExtension = path.extname(filePath).substring(1);
-    if (!this.isSupportedFile(fileExtension)) {
-      return null;
-    }
-
-    const content = await fs.promises.readFile(filePath, 'utf-8');
-    if (content.length > this.config.maxFileSize) {
-      console.warn(`[AST] Skipping file ${this.toRepoPath(filePath)} due to size`);
-      return null;
-    }
-
-    switch (fileExtension) {
-      case 'js':
-      case 'jsx':
-      case 'ts':
-      case 'tsx':
-        return this.analyzeTypeScriptFile(filePath, content);
-      case 'py':
-        return this.analyzePythonFile(filePath, content);
-      default:
-        console.warn(`[AST] No analyzer found for extension ${fileExtension}`);
-        return null;
-    }
-  }
-
-  private async analyzePythonFile(filePath: string, content: string): Promise<FileAnalysis> {
-    const functions: FunctionInfo[] = [];
-    const classes: ClassInfo[] = [];
-    const imports: ImportInfo[] = [];
-    const dependencies: string[] = [];
-
-    const tree = this.pythonParser.parse(content);
-    const rootNode = tree.rootNode;
-
-    // --- Query for top-level functions and classes ---
-    const mainQuery = new Query(Python as any, `
-      (function_definition
-        name: (identifier) @name
-        parameters: (parameters) @params
-      ) @function
-
-      (class_definition
-        name: (identifier) @name
-        argument_list: (argument_list)? @superclasses
-        body: (block) @body
-      ) @class
-    `);
-
-    const mainMatches = mainQuery.matches(rootNode);
-
-    for (const match of mainMatches) {
-      const node = match.captures[0].node;
-      const nameNode = match.captures.find((c: any) => c.name === 'name')?.node;
-      if (!nameNode) continue;
-
-      if (match.pattern === 0) { // Top-level function
-        const paramsNode = match.captures.find((c: any) => c.name === 'params')?.node;
-        const parameters = paramsNode?.children.map(p => p.text).filter(p => p !== ',' && p !== '(' && p !== ')') || [];
-        
-        functions.push({
-          name: nameNode.text,
-          line: node.startPosition.row + 1,
-          endLine: node.endPosition.row + 1,
-          parameters,
-          complexity: calculatePythonComplexity(node),
-          calls: [],
-          calledBy: []
-        });
-      } else if (match.pattern === 1) { // Class
-        const superclassesNode = match.captures.find((c: any) => c.name === 'superclasses')?.node;
-        const superclasses = superclassesNode?.children.map(s => s.text).filter(s => s !== ',' && s !== '(' && s !== ')') || [];
-        
-        const bodyNode = match.captures.find((c: any) => c.name === 'body')?.node;
-        const methods: MethodInfo[] = [];
-        let classComplexity = 0;
-
-        if (bodyNode) {
-          const methodQuery = new Query(Python as any, `
-            (function_definition
-              name: (identifier) @method.name
-              parameters: (parameters) @method.params
-            ) @method.function
-          `);
-          const methodMatches = methodQuery.matches(bodyNode);
-          for (const methodMatch of methodMatches) {
-            const methodNode = methodMatch.captures.find((c: any) => c.name === 'method.function')?.node;
-            const methodNameNode = methodMatch.captures.find((c: any) => c.name === 'method.name')?.node;
-            if (!methodNode || !methodNameNode) continue;
-
-            const methodParamsNode = methodMatch.captures.find((c: any) => c.name === 'method.params')?.node;
-            const methodParameters = methodParamsNode?.children.map(p => p.text).filter(p => p !== ',' && p !== '(' && p !== ')') || [];
-            const methodComplexity = calculatePythonComplexity(methodNode);
-            classComplexity += methodComplexity;
-
-            methods.push({
-              name: methodNameNode.text,
-              line: methodNode.startPosition.row + 1,
-              endLine: methodNode.endPosition.row + 1,
-              parameters: methodParameters,
-              complexity: methodComplexity,
-              visibility: 'public' // Python doesn't have explicit visibility
-            });
-          }
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf-8');
+      const ext = path.extname(filePath).toLowerCase();
+      
+      if (ext === '.js' || ext === '.jsx' || ext === '.mjs' || ext === '.cjs') {
+        try {
+          return this.analyzeJavaScriptFile(filePath, content);
+        } catch (err) {
+          console.warn(`[AST] Failed to parse JS file ${this.toRepoPath(filePath)}:`, err);
+          return null;
         }
-
-        classes.push({
-          name: nameNode.text,
-          line: node.startPosition.row + 1,
-          endLine: node.endPosition.row + 1,
-          methods,
-          properties: [], // Property parsing is more complex, leave for later
-          complexity: classComplexity,
-          extends: superclasses[0], // Simplified
-          implements: []
-        });
+      } else if (ext === '.ts' || ext === '.tsx') {
+        try {
+          return this.analyzeTypeScriptFile(filePath, content);
+        } catch (err) {
+          console.warn(`[AST] Failed to parse TS file ${this.toRepoPath(filePath)}:`, err);
+          return null;
+        }
       }
+      return null;
+    } catch (error) {
+      console.warn(`[IO] Failed to read file ${this.toRepoPath(filePath)}:`, error);
+      return null;
     }
-
-    // --- Refined Import Query ---
-    const importQuery = new Query(Python as any, `
-      (import_statement name: (dotted_name) @name) @import
-      (import_from_statement 
-        module_name: (dotted_name) @module
-        (dotted_name (identifier) @name)*
-      ) @from_import
-    `);
-    
-    const importMatches = importQuery.matches(rootNode);
-
-    for (const match of importMatches) {
-      if (match.pattern === 0) { // import statement
-          const nameNode = match.captures[0].node;
-          const moduleName = nameNode.text;
-          dependencies.push(moduleName);
-          imports.push({
-              module: moduleName,
-              imports: [moduleName],
-              line: nameNode.startPosition.row + 1,
-              isDefault: false,
-          });
-      } else if (match.pattern === 1) { // from ... import statement
-          const moduleNode = match.captures.find(c => c.name === 'module')?.node;
-          if (!moduleNode) continue;
-          
-          const importedNames = match.captures.filter(c => c.name === 'name').map(c => c.node.text);
-          dependencies.push(moduleNode.text);
-          imports.push({
-              module: moduleNode.text,
-              imports: importedNames,
-              line: moduleNode.startPosition.row + 1,
-              isDefault: false,
-          });
-      }
-    }
-    
-    const lines = rootNode.endPosition.row + 1;
-    const totalComplexity = functions.reduce((sum, f) => sum + f.complexity, 0) + classes.reduce((sum, c) => sum + c.complexity, 0);
-
-    return {
-      path: filePath,
-      language: 'python',
-      size: content.length,
-      lines,
-      functions,
-      classes,
-      imports,
-      exports: [], // Python's export model is implicit
-      dependencies,
-      complexity: {
-        cyclomatic: totalComplexity,
-        cognitive: 0,
-        halstead: 0,
-        maintainability: Math.max(0, 100 - (totalComplexity * 0.5))
-      },
-    };
   }
 
   private async analyzeJavaScriptFile(filePath: string, content: string): Promise<FileAnalysis> {
@@ -1076,32 +922,6 @@ export class AnalysisEngine {
     
     return modules;
   }
-}
-
-function calculatePythonComplexity(node: TreeSitter.SyntaxNode): number {
-  let complexity = 1;
-  const complexityNodes = [
-    'if_statement',
-    'for_statement',
-    'while_statement',
-    'except_clause',
-    'with_statement',
-    'assert_statement',
-    'boolean_operator',
-    'comprehension_if'
-  ];
-
-  function walk(n: TreeSitter.SyntaxNode) {
-    if (complexityNodes.includes(n.type)) {
-      complexity++;
-    }
-    for (const child of n.children) {
-      walk(child);
-    }
-  }
-
-  walk(node);
-  return complexity;
 }
 
 // Helper functions for complexity calculation
