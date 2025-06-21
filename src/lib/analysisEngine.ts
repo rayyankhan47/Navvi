@@ -477,7 +477,7 @@ export class AnalysisEngine {
       path: filePath,
       language: path.extname(filePath).substring(1),
       size: content.length,
-      lines: content.split('\n').length,
+      lines: ast.program.loc?.end.line || 0,
       functions,
       classes,
       imports,
