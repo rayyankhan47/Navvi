@@ -2,9 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { AnalysisEngine } from "../../../lib/analysisEngine";
-
-// Simple in-memory storage for analysis results (in production, use a database)
-const analysisResults = new Map<string, any>();
+import analysisResults from "../../../lib/analysisStore";
 
 export async function POST(request: NextRequest) {
   try {
