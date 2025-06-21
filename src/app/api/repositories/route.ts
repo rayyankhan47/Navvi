@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
 
     // Filter and format repositories
     const formattedRepos = repositories
-      .filter((repo: any) => !repo.fork) // Exclude forked repositories
       .map((repo: any) => ({
         id: repo.id,
         name: repo.name,
@@ -50,6 +49,8 @@ export async function GET(request: NextRequest) {
         language: repo.language,
         updated_at: repo.updated_at,
         private: repo.private,
+        fork: repo.fork,
+        owner: { login: repo.owner.login },
         html_url: repo.html_url,
         clone_url: repo.clone_url,
       }));

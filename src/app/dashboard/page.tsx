@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Users,
   Code,
-  ArrowRight
+  ArrowRight,
+  GitFork
 } from "lucide-react";
 import AnalysisProgress from "../../components/AnalysisProgress";
 
@@ -27,12 +28,18 @@ interface Repository {
   language: string | null;
   updated_at: string;
   private: boolean;
+  fork: boolean;
+  owner: {
+    login: string;
+  };
 }
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [ownedRepositories, setOwnedRepositories] = useState<Repository[]>([]);
+  const [collaborativeRepositories, setCollaborativeRepositories] = useState<Repository[]>([]);
+  const [forkedRepositories, setForkedRepositories] = useState<Repository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -55,8 +62,12 @@ export default function Dashboard() {
     try {
       const response = await fetch("/api/repositories");
       if (response.ok) {
-        const data = await response.json();
-        setRepositories(data);
+        const data: Repository[] = await response.json();
+        const userName = session?.user?.username;
+
+        setOwnedRepositories(data.filter(repo => !repo.fork && repo.owner.login === userName));
+        setCollaborativeRepositories(data.filter(repo => !repo.fork && repo.owner.login !== userName));
+        setForkedRepositories(data.filter(repo => repo.fork));
       } else {
         console.error("Failed to fetch repositories");
       }
@@ -70,8 +81,9 @@ export default function Dashboard() {
   const handleAnalyzeRepository = async () => {
     if (!selectedRepo) return;
     
-    // Find the selected repository object to get the full name and URL
-    const selectedRepository = repositories.find(repo => repo.full_name === selectedRepo);
+    // Combine all repo lists to find the selected one
+    const allRepos = [...ownedRepositories, ...collaborativeRepositories, ...forkedRepositories];
+    const selectedRepository = allRepos.find(repo => repo.full_name === selectedRepo);
     if (!selectedRepository) {
       setAnalysisError("Repository not found");
       return;
@@ -121,7 +133,17 @@ export default function Dashboard() {
     // Navigation will be handled by the API response
   };
 
-  const filteredRepositories = repositories.filter(repo =>
+  const filteredOwnedRepositories = ownedRepositories.filter(repo =>
+    repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCollaborativeRepositories = collaborativeRepositories.filter(repo =>
+    repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredForkedRepositories = forkedRepositories.filter(repo =>
     repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -214,8 +236,32 @@ export default function Dashboard() {
                   <Github className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{repositories.length}</div>
-                  <div className="text-sm text-gray-400">Repositories</div>
+                  <div className="text-2xl font-bold">{ownedRepositories.length}</div>
+                  <div className="text-sm text-gray-400">Your Repositories</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{collaborativeRepositories.length}</div>
+                  <div className="text-sm text-gray-400">Collaborations</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-lime-500/20 rounded-lg flex items-center justify-center">
+                  <GitFork className="w-5 h-5 text-lime-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{forkedRepositories.length}</div>
+                  <div className="text-sm text-gray-400">Forked Repositories</div>
                 </div>
               </div>
             </div>
@@ -243,18 +289,6 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-orange-400" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">0</div>
-                  <div className="text-sm text-gray-400">Team Members</div>
-                </div>
-              </div>
-            </div>
           </motion.div>
 
           {/* Repository Selection */}
@@ -278,72 +312,190 @@ export default function Dashboard() {
               </div>
             </div>
             
-            {repositories.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Github className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">
-                  No repositories found
-                </h3>
-                <p className="text-gray-400">
-                  Make sure you have repositories in your GitHub account and have granted the necessary permissions.
-                </p>
-              </div>
+            {isLoading ? (
+              <div className="text-center py-12 text-gray-400">Loading repositories...</div>
             ) : (
-              <div className="grid gap-4">
-                {filteredRepositories.map((repo) => (
-                  <motion.div
-                    key={repo.id}
-                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all duration-300 ${
-                      selectedRepo === repo.full_name
-                        ? "border-blue-500 bg-blue-500/10"
-                        : "border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setSelectedRepo(repo.full_name)}
-                    whileHover={{ y: -2 }}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3">
-                          <h3 className="font-semibold text-white">
-                            {repo.name}
-                          </h3>
-                          {repo.private && (
-                            <span className="px-2 py-1 bg-gray-800 text-gray-300 text-xs rounded-full">
-                              Private
-                            </span>
-                          )}
-                        </div>
-                        {repo.description && (
-                          <p className="text-gray-400 text-sm mt-1">
-                            {repo.description}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                          {repo.language && (
-                            <span className="flex items-center space-x-1">
-                              <Code className="w-4 h-4" />
-                              <span>{repo.language}</span>
-                            </span>
-                          )}
-                          <span>
-                            Updated {new Date(repo.updated_at).toLocaleDateString()}
-                          </span>
-                        </div>
+              ownedRepositories.length === 0 && collaborativeRepositories.length === 0 && forkedRepositories.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Github className="w-8 h-8 text-gray-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">No Repositories Found</h3>
+                  <p className="text-gray-400 mt-2">
+                    We couldn't find any repositories. Try syncing with GitHub again.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Owned Repositories */}
+                  {filteredOwnedRepositories.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 text-gray-400">
+                        <Github className="w-5 h-5" />
+                        <span className="font-semibold">Your Repositories ({filteredOwnedRepositories.length})</span>
                       </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center">
-                        {selectedRepo === repo.full_name && (
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        )}
+                      <div className="space-y-4">
+                        {filteredOwnedRepositories.map((repo, index) => (
+                          <motion.div
+                            key={repo.id}
+                            className={`p-4 rounded-lg transition-all duration-300 border ${
+                              selectedRepo === repo.full_name
+                                ? "bg-blue-500/10 border-blue-500"
+                                : "bg-white/5 border-transparent hover:bg-white/10"
+                            }`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <button
+                                  className="text-left w-full"
+                                  onClick={() => setSelectedRepo(repo.full_name)}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="truncate text-lg font-bold text-white">
+                                      {repo.full_name}
+                                    </div>
+                                  </div>
+                                  <p className="text-gray-400 mt-1 truncate">
+                                    {repo.description || "No description"}
+                                  </p>
+                                </button>
+                              </div>
+                              <div className="flex items-center space-x-4 ml-4">
+                                <span className="text-sm text-gray-400 capitalize">
+                                  {repo.language || "N/A"}
+                                </span>
+                                <span className="text-sm text-gray-400">
+                                  Updated {new Date(repo.updated_at).toLocaleDateString()}
+                                </span>
+                                {repo.private && (
+                                  <span className="text-xs font-semibold bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
+                                    Private
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                  )}
+
+                  {/* Collaborative Repositories */}
+                  {filteredCollaborativeRepositories.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3 text-gray-400">
+                        <Users className="w-5 h-5" />
+                        <span className="font-semibold">Collaborations ({filteredCollaborativeRepositories.length})</span>
+                      </div>
+                      <div className="space-y-4">
+                        {filteredCollaborativeRepositories.map((repo, index) => (
+                          <motion.div
+                            key={repo.id}
+                            className={`p-4 rounded-lg transition-all duration-300 border ${
+                              selectedRepo === repo.full_name
+                                ? "bg-purple-500/10 border-purple-500"
+                                : "bg-white/5 border-transparent hover:bg-white/10"
+                            }`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <button
+                                  className="text-left w-full"
+                                  onClick={() => setSelectedRepo(repo.full_name)}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="truncate text-lg font-bold text-white">
+                                      {repo.full_name}
+                                    </div>
+                                  </div>
+                                  <p className="text-gray-400 mt-1 truncate">
+                                    {repo.description || "No description"}
+                                  </p>
+                                </button>
+                              </div>
+                              <div className="flex items-center space-x-4 ml-4">
+                                <span className="text-sm text-gray-400 capitalize">
+                                  {repo.language || "N/A"}
+                                </span>
+                                <span className="text-sm text-gray-400">
+                                  Updated {new Date(repo.updated_at).toLocaleDateString()}
+                                </span>
+                                {repo.private && (
+                                  <span className="text-xs font-semibold bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
+                                    Private
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Forked Repositories */}
+                  {filteredForkedRepositories.length > 0 && (
+                    <div className="space-y-4">
+                       <div className="flex items-center space-x-3 text-gray-400">
+                        <GitFork className="w-5 h-5" />
+                        <span className="font-semibold">Forks ({filteredForkedRepositories.length})</span>
+                      </div>
+                      <div className="space-y-4">
+                        {filteredForkedRepositories.map((repo, index) => (
+                          <motion.div
+                            key={repo.id}
+                            className={`p-4 rounded-lg transition-all duration-300 border ${
+                              selectedRepo === repo.full_name
+                                ? "bg-lime-500/10 border-lime-500"
+                                : "bg-white/5 border-transparent hover:bg-white/10"
+                            }`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <button
+                                  className="text-left w-full"
+                                  onClick={() => setSelectedRepo(repo.full_name)}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="truncate text-lg font-bold text-white">
+                                      {repo.full_name}
+                                    </div>
+                                  </div>
+                                  <p className="text-gray-400 mt-1 truncate">
+                                    {repo.description || "No description"}
+                                  </p>
+                                </button>
+                              </div>
+                              <div className="flex items-center space-x-4 ml-4">
+                                <span className="text-sm text-gray-400 capitalize">
+                                  {repo.language || "N/A"}
+                                </span>
+                                <span className="text-sm text-gray-400">
+                                  Updated {new Date(repo.updated_at).toLocaleDateString()}
+                                </span>
+                                {repo.private && (
+                                  <span className="text-xs font-semibold bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
+                                    Private
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
             )}
           </motion.div>
 

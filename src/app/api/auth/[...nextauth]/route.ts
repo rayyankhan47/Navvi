@@ -1,46 +1,43 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import type { JWT } from "next-auth/jwt";
 import type { Session } from "next-auth";
 import type { Account, Profile } from "next-auth";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GithubProvider({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: "read:user user:email repo",
-        },
-      },
+          scope: 'read:user repo'
+        }
+      }
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }: { token: JWT; account: Account | null; profile?: Profile }) {
-      // Persist the OAuth access_token and or the user id to the token right after signin
+    async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token;
-        console.log("JWT callback - account access_token:", !!account.access_token);
       }
       if (profile) {
-        token.id = profile.id;
+        token.username = (profile as any).login;
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
-      // Send properties to the client, like an access_token and user id from a provider.
-      session.accessToken = token.accessToken;
-      session.user.id = token.id;
-      console.log("Session callback - accessToken:", !!token.accessToken);
+    async session({ session, token }) {
+      session.accessToken = token.accessToken as string;
+      if (session.user) {
+        (session.user as any).username = token.username;
+      }
       return session;
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signout",
-    error: "/auth/error",
+  session: {
+    strategy: 'jwt'
   },
+  secret: process.env.NEXTAUTH_SECRET
 };
 
 const handler = NextAuth(authOptions);
