@@ -56,14 +56,7 @@ class ShoppingCart {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2 group">
-                <motion.div 
-                  className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span className="text-white font-bold text-lg">N</span>
-                </motion.div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-lime-400 to-green-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold text-white">
                   Navvi
                 </span>
               </Link>
@@ -88,9 +81,12 @@ class ShoppingCart {
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ 
+            duration: 2,
+            ease: [0.16, 1, 0.3, 1]
+          }}
         >
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-lime-400 via-green-400 to-emerald-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 text-white">
             Security Proof: Your Code Never Leaves Your Browser
           </h1>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
@@ -104,7 +100,11 @@ class ShoppingCart {
           className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ 
+            duration: 2,
+            ease: [0.16, 1, 0.3, 1],
+            delay: 0.2 
+          }}
         >
           <h2 className="text-3xl font-semibold mb-8 text-center">How We Prove Security</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -158,7 +158,11 @@ class ShoppingCart {
           className="grid lg:grid-cols-2 gap-8 mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ 
+            duration: 2,
+            ease: [0.16, 1, 0.3, 1],
+            delay: 0.4 
+          }}
         >
           {/* Code Input */}
           <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6">
@@ -277,7 +281,11 @@ class ShoppingCart {
           className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          transition={{ 
+            duration: 2,
+            ease: [0.16, 1, 0.3, 1],
+            delay: 0.6 
+          }}
         >
           <h3 className="text-xl font-semibold mb-4">Network Activity Monitor</h3>
           <div className="bg-black/30 rounded-lg p-4 border border-gray-700">

@@ -129,3 +129,5 @@ temp/
 
 # Analysis cache
 .analysis-cache/
+
+/src/generated/prisma

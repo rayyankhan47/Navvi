@@ -159,7 +159,10 @@ const FeatureCard = ({
     whileHover={{ y: -8, scale: 1.02 }}
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, ease: "easeInOut" }}
+    transition={{ 
+      duration: 2,
+      ease: [0.16, 1, 0.3, 1]
+    }}
   >
     <div className={`w-12 h-12 ${gradient} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
       <Icon className="w-6 h-6 text-white" />
@@ -233,11 +236,11 @@ export default function HomePage() {
               <Link href="/security" className="text-gray-300 hover:text-white transition-colors">
                 Security
               </Link>
-              <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors">
+              <Link href="/auth/confirm" className="text-gray-300 hover:text-white transition-colors">
                 Sign In
               </Link>
-              <Link 
-                href="/auth/signin"
+              <Link
+                href="/onboarding"
                 className="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
               >
                 Get Started
@@ -256,7 +259,11 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeInOut", delay: 0.2 }}
+            transition={{ 
+              duration: 2,
+              ease: [0.16, 1, 0.3, 1],
+              delay: 0.2 
+            }}
             className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 pb-4"
           >
             Developer Onboarding, Automated.
@@ -264,15 +271,23 @@ export default function HomePage() {
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeInOut", delay: 0.4 }}
+            transition={{ 
+              duration: 2,
+              ease: [0.16, 1, 0.3, 1],
+              delay: 0.4 
+            }}
             className="mt-6 text-lg text-gray-400 max-w-2xl mx-auto"
           >
-            Navvi is an AI-powered assistant that accelerates developer onboarding by creating interactive, context-aware roadmaps for any codebase.
+            Stop spending weeks understanding new codebases. Navvi analyzes repositories and creates interactive learning paths for new developers.
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeInOut", delay: 0.6 }}
+            transition={{ 
+              duration: 2,
+              ease: [0.16, 1, 0.3, 1],
+              delay: 0.6 
+            }}
             className="mt-10 flex justify-center items-center space-x-4"
           >
             <Link 
@@ -282,10 +297,15 @@ export default function HomePage() {
               <Zap className="w-5 h-5" />
               <span>Analyze a Repo</span>
             </Link>
-            <button className="group flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
-              <Play className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
-              <span>Watch Demo</span>
-            </button>
+            <Link 
+              href="https://github.com/rayyankhan47/Navvi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <Github className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+              <span>View On Github</span>
+            </Link>
           </motion.div>
         </div>
       </motion.section>
@@ -297,7 +317,10 @@ export default function HomePage() {
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ 
+              duration: 2,
+              ease: [0.16, 1, 0.3, 1]
+            }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Not Another GPT Wrapper
@@ -358,7 +381,7 @@ export default function HomePage() {
             Start analyzing your first repository for free. No credit card required.
           </p>
           <Link
-            href="/auth/signin"
+            href="/onboarding"
             className="bg-white/10 border border-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors inline-flex items-center space-x-2"
           >
             <Zap className="w-6 h-6" />

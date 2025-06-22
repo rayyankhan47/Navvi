@@ -1,0 +1,207 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User model with enhanced onboarding data
+model User {
+  id                  String    @id @default(cuid())
+  githubUsername      String?
+  name                String?
+  email               String?   @unique
+  emailVerified       DateTime?
+  image               String?
+  experienceLevel     ExperienceLevel @default(JUNIOR)
+  workEnvironment     WorkEnvironment @default(SDE)
+  preferredLanguages  String[]  @default([])
+  focusAreas          String[]  @default([])
+  timeCommitment      TimeCommitment @default(MODERATE)
+  learningStyle       LearningStyle @default(INTERACTIVE)
+  onboardingCompleted Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  accounts            Account[]
+  sessions            Session[]
+  repositoryAnalyses  RepositoryAnalysis[]
+  learningPaths       LearningPath[]
+  preferences         UserPreferences?
+  progressTracking    ProgressTracking[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// User preferences for personalization
+model UserPreferences {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredComplexity ComplexityLevel @default(INTERMEDIATE)
+  notificationSettings Json? // Store notification preferences
+  theme             String   @default("dark")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+// Repository analysis results
+model RepositoryAnalysis {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositoryName    String
+  repositoryUrl     String
+  repositoryOwner   String
+  analysisData      Json     // Store complexity metrics, structure, etc.
+  securityProof     Json?    // Store security verification data
+  status            AnalysisStatus @default(PENDING)
+  processingTime    Int?     // Time taken to analyze in milliseconds
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  learningPaths     LearningPath[]
+
+  @@unique([userId, repositoryName, repositoryOwner])
+  @@map("repository_analyses")
+}
+
+// Learning paths generated for users
+model LearningPath {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositoryAnalysisId String?
+  repositoryAnalysis RepositoryAnalysis? @relation(fields: [repositoryAnalysisId], references: [id], onDelete: SetNull)
+  title             String
+  description       String
+  modules           Json     // Structured learning content
+  difficulty        ComplexityLevel @default(INTERMEDIATE)
+  estimatedDuration Int      // Estimated time in minutes
+  status            LearningPathStatus @default(DRAFT)
+  isPersonalized    Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  progressTracking  ProgressTracking[]
+
+  @@map("learning_paths")
+}
+
+// Progress tracking for learning paths
+model ProgressTracking {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningPathId    String
+  learningPath      LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+  currentModule     Int      @default(0)
+  completedModules  Int[]    @default([]) // Array of completed module indices
+  timeSpent         Int      @default(0) // Total time spent in seconds
+  lastAccessed      DateTime @default(now())
+  completionRate    Float    @default(0) // Percentage complete (0-100)
+  status            ProgressStatus @default(IN_PROGRESS)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, learningPathId])
+  @@map("progress_tracking")
+}
+
+// Enums
+enum ExperienceLevel {
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+}
+
+enum WorkEnvironment {
+  SDE
+  AI
+  FINTECH
+  STARTUP
+  ENTERPRISE
+  OTHER
+}
+
+enum TimeCommitment {
+  MINIMAL
+  MODERATE
+  INTENSIVE
+}
+
+enum LearningStyle {
+  VISUAL
+  TEXT
+  INTERACTIVE
+  MIXED
+}
+
+enum ComplexityLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum LearningPathStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+}

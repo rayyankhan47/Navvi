@@ -16,7 +16,8 @@ import {
   Users,
   Code,
   ArrowRight,
-  GitFork
+  GitFork,
+  PlusCircle
 } from "lucide-react";
 import AnalysisProgress from "../../components/AnalysisProgress";
 
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -54,9 +56,26 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (session) {
+      checkOnboardingStatus();
       fetchRepositories();
     }
   }, [session]);
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const response = await fetch("/api/user/onboarding-status");
+      if (response.ok) {
+        const data = await response.json();
+        setOnboardingCompleted(data.onboardingCompleted);
+        
+        if (!data.onboardingCompleted) {
+          router.push("/onboarding");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking onboarding status:", error);
+    }
+  };
 
   const fetchRepositories = async () => {
     try {
@@ -305,13 +324,18 @@ export default function Dashboard() {
                   Pick from your repositories below or search to find a specific one.
                 </p>
               </div>
-              <button
-                onClick={handleAnalyzeRepository}
-                disabled={!selectedRepo || isAnalyzing}
-                className="w-full md:w-auto bg-white/10 border border-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors disabled:bg-gray-600/50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              <Link
+                href="/auth/confirm"
+                className="w-full md:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-500 transition-colors flex items-center space-x-2"
               >
-                <TrendingUp className="w-5 h-5" />
-                <span>Analyze</span>
+                <PlusCircle className="w-5 h-5" />
+                <span>Analyze a Repo</span>
+              </Link>
+              <button
+                onClick={() => signOut()}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-500 transition-colors"
+              >
+                Sign Out
               </button>
             </div>
             
