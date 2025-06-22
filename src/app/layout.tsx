@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import SessionProviderClient from "./SessionProviderClient";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "Navvi - AI-Powered Onboarding Buddy",
@@ -10,9 +11,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-black">
         <SessionProviderClient>
-          {children}
+          <Header />
+          <main className="pt-20">
+            {children}
+          </main>
         </SessionProviderClient>
       </body>
     </html>

@@ -3,6 +3,8 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { 
   Github, 
   Zap, 
@@ -78,6 +80,61 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
     </motion.div>
   );
 };
+
+// Navigation Authentication Component
+const NavAuth = () => {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center space-x-6">
+        <div className="h-6 w-16 bg-gray-800 rounded-md animate-pulse"></div>
+        <div className="h-10 w-24 bg-gray-700 rounded-lg animate-pulse"></div>
+      </div>
+    );
+  }
+
+  if (status === "authenticated") {
+    return (
+      <div className="flex items-center space-x-4">
+         <Link href="/security" className="text-gray-300 hover:text-white transition-colors">
+          Security
+        </Link>
+        <Link href="/dashboard" className="flex items-center space-x-3 group">
+          <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+            {session.user?.name?.split(' ')[0]}
+          </span>
+          {session.user?.image && (
+            <Image
+              src={session.user.image}
+              alt={session.user.name ?? "User"}
+              width={32}
+              height={32}
+              className="rounded-full border-2 border-white/20 group-hover:border-white/50 transition-all"
+            />
+          )}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+     <div className="flex items-center space-x-6">
+      <Link href="/security" className="text-gray-300 hover:text-white transition-colors">
+        Security
+      </Link>
+      <Link href="/auth/confirm" className="text-gray-300 hover:text-white transition-colors">
+        Sign In
+      </Link>
+      <Link
+        href="/onboarding"
+        className="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+      >
+        Get Started
+      </Link>
+    </div>
+  )
+}
 
 // Real-time Analysis Demo Component
 const AnalysisDemo = () => {
@@ -219,41 +276,13 @@ export default function HomePage() {
     <div ref={containerRef} className="min-h-screen bg-black text-white overflow-hidden">
       {/* Floating Code Particles */}
       {Array.from({ length: 20 }).map((_, i) => (
-        <CodeParticle key={i} delay={i * 0.2} />
+        <CodeParticle key={i} delay={i * 0.05} />
       ))}
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 border border-white/20 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">N</span>
-              </div>
-              <span className="text-xl font-bold">Navvi</span>
-            </div>
-            <div className="flex items-center space-x-6">
-              <Link href="/security" className="text-gray-300 hover:text-white transition-colors">
-                Security
-              </Link>
-              <Link href="/auth/confirm" className="text-gray-300 hover:text-white transition-colors">
-                Sign In
-              </Link>
-              <Link
-                href="/onboarding"
-                className="bg-white text-black px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
-      <motion.section 
-        style={{ y, opacity }}
-        className="relative min-h-screen flex items-center justify-center text-center px-6"
+      <motion.header 
+        style={{ opacity, y }}
+        className="relative z-10 text-center px-6 pt-32 pb-16"
       >
         <div>
           <motion.div
@@ -308,7 +337,7 @@ export default function HomePage() {
             </Link>
           </motion.div>
         </div>
-      </motion.section>
+      </motion.header>
 
       {/* Features Section */}
       <section className="py-24 px-6">

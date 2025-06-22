@@ -190,42 +190,8 @@ export default function Dashboard() {
         onComplete={handleAnalysisComplete}
       />
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">N</span>
-                </div>
-                <span className="text-xl font-bold">Navvi</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <img
-                  src={session.user?.image || ""}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full"
-                />
-                <span className="text-white font-medium">
-                  {session.user?.name}
-                </span>
-              </div>
-              <button
-                onClick={() => signOut()}
-                className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
-      <main className="pt-20 pb-12 px-6">
+      <main className="pt-8 pb-12 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <motion.div 
