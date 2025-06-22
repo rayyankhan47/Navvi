@@ -102,7 +102,7 @@ navvi/
 ## Features
 
 ### Implemented (MVP)
-- [x] Beautiful landing page with value proposition
+- [x] Landing page with value proposition
 - [x] GitHub OAuth authentication
 - [x] Repository selection dashboard
 - [x] AST analysis results with interactive UI
