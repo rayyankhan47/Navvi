@@ -19,13 +19,33 @@ Navvi is built with security in mind:
 - **GitHub OAuth** - Secure authentication with minimal permissions
 - **Open Source Core** - Analysis engine is transparent and auditable
 
+## 🔒 Security Verification
+
+To verify our zero-knowledge approach:
+
+1. **Run the app**: `npm run dev`
+2. **Navigate to** `/security`
+3. **Open browser dev tools** → Network tab
+4. **Paste any code** and click "Analyze Locally"
+5. **Verify**: No network requests contain code content
+6. **Inspect** `src/lib/clientAnalysis.ts` to see the local processing logic
+
+### What You'll See
+- **Code analysis results** generated entirely in your browser
+- **Cryptographic hash** proving the code was processed without revealing content
+- **Network monitor** showing "0 bytes sent to server"
+- **Security level**: "Zero-Knowledge"
+
+### Why This Matters
+Our security approach is completely transparent. You can see every line of code that processes your data. When you paste code into our security demo, you can verify that absolutely no code content is sent to our servers. The analysis happens entirely in your browser, and we only see a cryptographic hash, never the actual code.
+
 ## Architecture
 
 ### Core Components
 - **AST Parser** - Converts code into abstract syntax trees for analysis
 - **Dependency Analyzer** - Maps relationships between components
 - **AI Insights Engine** - Generates explanations and tutorials
-- **Interactive UI** - Beautiful, responsive web interface
+- **Interactive UI** - Responsive web interface
 
 ### Tech Stack
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
