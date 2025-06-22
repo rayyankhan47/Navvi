@@ -2,7 +2,7 @@
 
 > Stop spending weeks understanding new codebases. Navvi analyzes your repository and creates interactive learning paths for new developers.
 
-## 🚀 About Navvi
+## About Navvi
 
 Navvi is an AI-powered onboarding buddy that transforms how new developers understand codebases. Instead of spending weeks or months trying to figure out how everything fits together, Navvi provides:
 
@@ -11,7 +11,7 @@ Navvi is an AI-powered onboarding buddy that transforms how new developers under
 - **Interactive Tutorials** - Step-by-step walkthroughs of key workflows
 - **Dependency Graphs** - See exactly how classes and functions rely on each other
 
-## 🛡️ Security-First Approach
+## Security-First Approach
 
 Navvi is built with security in mind:
 - **Local Processing** - Code analysis happens locally, never stored
@@ -19,7 +19,7 @@ Navvi is built with security in mind:
 - **GitHub OAuth** - Secure authentication with minimal permissions
 - **Open Source Core** - Analysis engine is transparent and auditable
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 - **AST Parser** - Converts code into abstract syntax trees for analysis
@@ -33,7 +33,7 @@ Navvi is built with security in mind:
 - **Analysis**: Abstract Syntax Tree parsing (planned)
 - **Deployment**: Vercel-ready
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+ 
@@ -99,21 +99,20 @@ navvi/
 └── package.json
 ```
 
-## 🎯 Features
+## Features
 
-### ✅ Implemented (MVP)
+### Implemented (MVP)
 - [x] Beautiful landing page with value proposition
 - [x] GitHub OAuth authentication
 - [x] Repository selection dashboard
-- [x] Mock analysis results with interactive UI
+- [x] AST analysis results with interactive UI
 - [x] Responsive design with Tailwind CSS
 - [x] TypeScript support
+- [x] Dependency graph visualization
+- [x] Git history analysis
 
-### 🚧 Planned Features
-- [ ] Real AST parsing and analysis
-- [ ] Dependency graph visualization
+### Planned Features
 - [ ] Interactive code walkthroughs
-- [ ] Git history analysis
 - [ ] Test coverage integration
 - [ ] Export functionality
 - [ ] Team collaboration features
