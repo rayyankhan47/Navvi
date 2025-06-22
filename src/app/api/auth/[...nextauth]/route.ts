@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
           select: { githubUsername: true, onboardingCompleted: true },
         });
         if (dbUser) {
-          token.username = dbUser.githubUsername;
+          token.username = dbUser.githubUsername || undefined;
           token.onboardingCompleted = dbUser.onboardingCompleted;
         }
       }

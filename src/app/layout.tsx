@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionProviderClient>
           <Header />
           <main className="pt-20">
-            {children}
+          {children}
           </main>
         </SessionProviderClient>
       </body>

@@ -82,7 +82,7 @@ export default function AnalysisPage({ params }: AnalysisPageProps) {
   if (error) {
     return <div className="text-red-500 text-center mt-20">{error}</div>;
   }
-  
+
   if (!analysis) {
     // This case should ideally be handled by the loading state
     return <div className="text-center mt-20">No analysis data available.</div>;
@@ -212,20 +212,20 @@ export default function AnalysisPage({ params }: AnalysisPageProps) {
                         <p className="text-2xl font-bold">{analysis.metrics.totalFiles}</p>
                       </div>
                     </div>
-                  </div>
+                    </div>
                   <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                     <div className="flex items-center space-x-3">
                       <BarChart3 className="w-8 h-8 text-green-400" />
                       <div>
                         <p className="text-sm text-gray-400">Lines of Code</p>
                         <p className="text-2xl font-bold">{analysis.metrics.totalLines}</p>
-                      </div>
+                    </div>
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                     <div className="flex items-center space-x-3">
                       <Layers className="w-8 h-8 text-purple-400" />
-                      <div>
+                  <div>
                         <p className="text-sm text-gray-400">Components</p>
                         <p className="text-2xl font-bold">{analysis.architecture.components.length}</p>
                       </div>
@@ -234,25 +234,25 @@ export default function AnalysisPage({ params }: AnalysisPageProps) {
                   <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                     <div className="flex items-center space-x-3">
                       <TrendingUp className="w-8 h-8 text-yellow-400" />
-                      <div>
+                  <div>
                         <p className="text-sm text-gray-400">Dependencies</p>
                         <p className="text-2xl font-bold">{analysis.architecture.relationships.length}</p>
-                      </div>
+                        </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Dependency Graph */}
+                  {/* Dependency Graph */}
                 <div className="bg-white/5 rounded-lg p-6 border border-white/10">
                   <h3 className="text-xl font-bold mb-4">Dependency Graph</h3>
-                  <DependencyGraph 
-                    components={analysis.architecture.components}
-                    relationships={analysis.architecture.relationships}
-                  />
-                </div>
+                    <DependencyGraph 
+                      components={analysis.architecture.components}
+                      relationships={analysis.architecture.relationships}
+                    />
+                  </div>
 
                 {/* Analysis Insights */}
-                <div>
+                        <div>
                   <h3 className="text-xl font-bold mb-6">Analysis Insights</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {analysis.insights.hotspots && analysis.insights.hotspots.length > 0 && (
@@ -285,8 +285,8 @@ export default function AnalysisPage({ params }: AnalysisPageProps) {
                             </li>
                           ))}
                         </ul>
-                      </div>
-                    )}
+                    </div>
+                  )}
                      {analysis.insights.entryPoints && analysis.insights.entryPoints.length > 0 && (
                       <div className="bg-white/5 rounded-lg p-6 border border-white/10">
                         <h4 className="font-bold text-lg text-white mb-3 flex items-center">
@@ -299,13 +299,13 @@ export default function AnalysisPage({ params }: AnalysisPageProps) {
                               <span className="font-mono block truncate">{file.path}</span>
                                <span className="text-xs text-gray-500">{file.exports.slice(0, 3).join(', ')}{file.exports.length > 3 ? '...' : ''}</span>
                             </li>
-                          ))}
+                      ))}
                         </ul>
-                      </div>
+                  </div>
                     )}
                   </div>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
               {/* Architecture Tab */}
               {/* ... existing code ... */}

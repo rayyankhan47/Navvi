@@ -297,9 +297,9 @@ export default function HomePage() {
           >
             Developer Onboarding, Automated.
           </motion.div>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
             transition={{ 
               duration: 2,
               ease: [0.16, 1, 0.3, 1],
@@ -308,24 +308,24 @@ export default function HomePage() {
             className="mt-6 text-lg text-gray-400 max-w-2xl mx-auto"
           >
             Stop spending weeks understanding new codebases. Navvi analyzes repositories and creates interactive learning paths for new developers.
-          </motion.p>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
             transition={{ 
               duration: 2,
               ease: [0.16, 1, 0.3, 1],
               delay: 0.6 
             }}
             className="mt-10 flex justify-center items-center space-x-4"
-          >
-            <Link 
-              href="/auth/signin"
-              className="bg-white/10 border border-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors flex items-center space-x-2"
             >
+              <Link 
+                href="/auth/signin"
+              className="bg-white/10 border border-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors flex items-center space-x-2"
+              >
               <Zap className="w-5 h-5" />
               <span>Analyze a Repo</span>
-            </Link>
+              </Link>
             <Link 
               href="https://github.com/rayyankhan47/Navvi"
               target="_blank"
@@ -403,19 +403,19 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Ready to Dive In?
-          </h2>
+            </h2>
           <p className="text-xl text-gray-400 mb-10">
             Start analyzing your first repository for free. No credit card required.
-          </p>
-          <Link
+            </p>
+              <Link 
             href="/onboarding"
             className="bg-white/10 border border-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors inline-flex items-center space-x-2"
-          >
+              >
             <Zap className="w-6 h-6" />
-            <span>Get Started Free</span>
-          </Link>
+                <span>Get Started Free</span>
+              </Link>
         </div>
       </section>
 

@@ -44,7 +44,7 @@ export default function SignIn() {
                 <div className="flex items-center justify-between">
                     <Link href="/" className="flex items-center space-x-2">
                         <div className="w-8 h-8 border border-white/20 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">N</span>
+              <span className="text-white font-bold text-lg">N</span>
                         </div>
                         <span className="text-xl font-bold">Navvi</span>
                     </Link>
@@ -64,35 +64,35 @@ export default function SignIn() {
                     <div className="text-center mb-6">
                         <h1 className="text-3xl font-bold text-white mb-2">
                             Connect to Get Started
-                        </h1>
+          </h1>
                         <p className="text-gray-400">
                             Sign in with GitHub to analyze your first repository.
-                        </p>
-                    </div>
+          </p>
+        </div>
 
-                    <div className="space-y-6">
-                        <button
-                            onClick={handleGitHubSignIn}
-                            disabled={isLoading}
+          <div className="space-y-6">
+            <button
+              onClick={handleGitHubSignIn}
+              disabled={isLoading}
                             className="w-full flex items-center justify-center space-x-3 bg-white/10 border border-white/20 backdrop-blur-sm text-white rounded-xl py-3 px-6 hover:bg-white/20 transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
                                 <Github className="w-5 h-5" />
-                            )}
-                            <span>
-                                {isLoading ? "Connecting..." : "Continue with GitHub"}
-                            </span>
-                        </button>
+              )}
+              <span>
+                {isLoading ? "Connecting..." : "Continue with GitHub"}
+              </span>
+            </button>
 
-                        <div className="text-center">
+            <div className="text-center">
                             <p className="text-xs text-gray-500">
                                 By signing in, you agree to our Terms and Privacy Policy.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+              </p>
+            </div>
+          </div>
+        </div>
             </motion.div>
         </section>
     </div>

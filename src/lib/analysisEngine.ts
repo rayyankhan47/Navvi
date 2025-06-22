@@ -20,7 +20,6 @@ import {
   ComponentAnalysis,
   ArchitectureAnalysis,
   Relationship,
-  CriticalPath,
   RepositoryAnalysis,
   RepositoryMetrics,
   AnalysisConfig,
@@ -135,7 +134,6 @@ export class AnalysisEngine {
             patterns: [],
             dataFlow: []
           },
-          criticalPaths: [],
           metrics: {
             totalFiles: 0,
             totalLines: 0,
@@ -156,7 +154,10 @@ export class AnalysisEngine {
               estimatedTime: 0,
               modules: [],
               prerequisites: []
-            }
+            },
+            highComplexityFiles: [],
+            hotspots: [],
+            entryPoints: []
           },
           timestamp: new Date()
         };
@@ -944,16 +945,16 @@ function calculateFunctionComplexity(node: any): number {
     // Only recurse on children if this node is not a complexity-contributing structure
     // or if it's a logical expression, which can have nested logical expressions.
     if (!isComplexityNode || n.type === 'LogicalExpression') {
-      for (const key in n) {
-        if (n.hasOwnProperty(key)) {
-          const child = n[key];
-          if (Array.isArray(child)) {
-            child.forEach(walk);
+    for (const key in n) {
+      if (n.hasOwnProperty(key)) {
+        const child = n[key];
+        if (Array.isArray(child)) {
+          child.forEach(walk);
           } else if (child && typeof child === 'object' && child.type) {
             // Prevent walking into nested function/class definitions
             if (child.type !== 'FunctionDeclaration' && child.type !== 'FunctionExpression' && 
                 child.type !== 'ArrowFunctionExpression' && child.type !== 'ClassDeclaration') {
-              walk(child);
+          walk(child);
             }
           }
         }
