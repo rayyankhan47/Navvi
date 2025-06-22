@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -23,6 +23,8 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
   const [mounted, setMounted] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [color, setColor] = useState('');
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRef = useRef<number | null>(null);
   
   useEffect(() => {
     setMounted(true);
@@ -44,8 +46,17 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
     // Set initial position
     animate();
     
-    const interval = setInterval(animate, 4000 + delay * 500);
-    return () => clearInterval(interval);
+    // Use a more stable interval that doesn't get reset on re-renders
+    intervalRef.current = setInterval(animate, 4000 + delay * 500);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [delay]);
 
   const codeSnippets = [
@@ -79,7 +90,8 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
         repeat: Infinity, 
         delay: delay * 0.5,
         ease: "easeInOut",
-        times: [0, 0.5, 1]
+        times: [0, 0.5, 1],
+        repeatDelay: 0
       }}
     >
       {codeSnippets[Math.floor(Math.random() * codeSnippets.length)]}
@@ -278,12 +290,18 @@ export default function HomePage() {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
+  // Create stable particle array to prevent re-mounting on scroll
+  const particles = useMemo(() => 
+    Array.from({ length: 20 }).map((_, i) => (
+      <CodeParticle key={`particle-${i}`} delay={i * 0.05} />
+    )), 
+    []
+  );
+
   return (
     <div ref={containerRef} className="min-h-screen bg-black text-white overflow-hidden">
       {/* Floating Code Particles */}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <CodeParticle key={i} delay={i * 0.05} />
-      ))}
+      {particles}
 
       {/* Hero Section */}
       <motion.header 
