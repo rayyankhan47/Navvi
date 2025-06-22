@@ -11,6 +11,7 @@ export interface FileAnalysis {
   exports: ExportInfo[];
   complexity: ComplexityMetrics;
   dependencies: string[];
+  commitCount?: number;
 }
 
 export interface FunctionInfo {
@@ -121,10 +122,10 @@ export interface DataFlow {
 
 export interface CriticalPath {
   name: string;
-  files: string[];
-  importance: number; // 0-100
-  complexity: number;
   description: string;
+  files: string[];
+  importance: number;
+  complexity: number;
   businessLogic: string[];
 }
 
@@ -132,9 +133,18 @@ export interface RepositoryAnalysis {
   repository: string;
   files: FileAnalysis[];
   architecture: ArchitectureAnalysis;
-  criticalPaths: CriticalPath[];
   metrics: RepositoryMetrics;
-  insights: AnalysisInsights;
+  insights: {
+    architecturalStyle: string;
+    codeQuality: string;
+    complexityDistribution: string;
+    potentialIssues: string[];
+    recommendations: string[];
+    learningPath: any;
+    highComplexityFiles: { path: string, complexity: number }[];
+    hotspots: { path: string, commitCount: number }[];
+    entryPoints: { path: string, exports: string[] }[];
+  };
   timestamp: Date;
 }
 

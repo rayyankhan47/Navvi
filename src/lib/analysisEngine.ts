@@ -101,6 +101,22 @@ export class AnalysisEngine {
       
       this.updateProgress('parsing', 40, 'Scanning files...');
       
+      // Analyze git history for file change frequency
+      this.updateProgress('analyzing', 45, 'Analyzing git history...');
+      const repoGit = simpleGit(analysisDir);
+      const log = await repoGit.log();
+      const fileChangeCounts: { [key: string]: number } = {};
+
+      for (const commit of log.all) {
+        const changedFilesStr = await repoGit.show(['--name-only', '--pretty=format:', commit.hash]);
+        if (typeof changedFilesStr === 'string') {
+          const changedFiles = changedFilesStr.split('\n').filter(f => f);
+          changedFiles.forEach(file => {
+            fileChangeCounts[file] = (fileChangeCounts[file] || 0) + 1;
+          });
+        }
+      }
+      
       // Scan for files to analyze
       const files = await this.scanFiles(analysisDir);
       console.log(`[scanFiles] Found ${files.length} files to analyze:`);
@@ -157,8 +173,12 @@ export class AnalysisEngine {
         try {
           const analysis = await this.analyzeFile(file);
           if (analysis) {
+            // Add commit count to analysis
+            const repoRelativePath = this.toRepoPath(file);
+            analysis.commitCount = fileChangeCounts[repoRelativePath] || 0;
+
             // Normalize file path to repo-relative immediately
-            analysis.path = this.toRepoPath(analysis.path);
+            analysis.path = repoRelativePath;
             fileAnalyses.push(analysis);
           }
         } catch (fileError) {
@@ -173,9 +193,6 @@ export class AnalysisEngine {
       
       // Generate architecture analysis
       const architecture = this.buildArchitecture(fileAnalyses);
-      
-      // Identify critical paths
-      const criticalPaths = this.identifyCriticalPaths(fileAnalyses, architecture);
       
       // Calculate metrics
       const metrics = this.calculateMetrics(fileAnalyses);
@@ -192,7 +209,6 @@ export class AnalysisEngine {
         repository: repoName,
         files: fileAnalyses,
         architecture,
-        criticalPaths,
         metrics,
         insights,
         timestamp: new Date()
@@ -506,29 +522,32 @@ export class AnalysisEngine {
   private identifyComponents(files: FileAnalysis[]): ComponentAnalysis[] {
     const components: ComponentAnalysis[] = [];
 
-    // Group files by top-level folder (e.g., app, components, lib, types)
+    // Group files by their parent directory to create more granular components
     const fileGroups = new Map<string, string[]>();
     files.forEach(file => {
       const relPath = file.path;
-      const topLevel = relPath.split('/')[0];
-      const group = fileGroups.get(topLevel) || [];
+      // Use parent directory as the component group
+      const componentDir = path.dirname(relPath);
+      const group = fileGroups.get(componentDir) || [];
       group.push(relPath);
-      fileGroups.set(topLevel, group);
+      fileGroups.set(componentDir, group);
     });
 
-    fileGroups.forEach((filePaths, topLevel) => {
+    fileGroups.forEach((filePaths, componentDir) => {
       const componentFiles = files.filter(f => filePaths.includes(f.path));
-      const type = this.determineComponentType(topLevel, componentFiles);
+      // Use the directory name as the component name, or '.' for root files
+      const componentName = componentDir === '.' ? 'root' : componentDir;
+      const type = this.determineComponentType(componentName, componentFiles);
       const dependencies = this.extractDependencies(componentFiles);
       const complexity = componentFiles.reduce((sum, f) => sum + f.complexity.cyclomatic, 0);
       components.push({
-        name: topLevel,
+        name: componentName,
         type,
         files: filePaths,
         dependencies,
         dependents: [],
         complexity,
-        description: this.generateComponentDescription(topLevel, componentFiles),
+        description: this.generateComponentDescription(componentName, componentFiles),
         patterns: this.detectComponentPatterns(componentFiles)
       });
     });
@@ -697,57 +716,6 @@ export class AnalysisEngine {
     return [];
   }
 
-  private identifyCriticalPaths(files: FileAnalysis[], architecture: ArchitectureAnalysis): CriticalPath[] {
-    const criticalPaths: CriticalPath[] = [];
-
-    // Identify files with high complexity
-    const highComplexityFiles = files.filter(f => f.complexity.cyclomatic > this.config.complexityThreshold);
-    
-    highComplexityFiles.forEach(file => {
-      criticalPaths.push({
-        name: `High Complexity: ${path.basename(file.path)}`,
-        files: [file.path],
-        importance: Math.min(100, file.complexity.cyclomatic * 10),
-        complexity: file.complexity.cyclomatic,
-        description: `File with high cyclomatic complexity (${file.complexity.cyclomatic})`,
-        businessLogic: this.extractBusinessLogic(file)
-      });
-    });
-
-    // Identify entry points
-    const entryPoints = files.filter(f => f.exports.length > 0);
-    if (entryPoints.length > 0) {
-      criticalPaths.push({
-        name: 'Application Entry Points',
-        files: entryPoints.map(f => f.path),
-        importance: 95,
-        complexity: entryPoints.reduce((sum, f) => sum + f.complexity.cyclomatic, 0),
-        description: 'Main entry points and exported modules',
-        businessLogic: ['Application initialization', 'Module exports', 'Public API']
-      });
-    }
-
-    return criticalPaths;
-  }
-
-  private extractBusinessLogic(file: FileAnalysis): string[] {
-    const logic: string[] = [];
-    
-    file.functions.forEach(func => {
-      if (func.complexity > 5) {
-        logic.push(`Complex function: ${func.name}`);
-      }
-    });
-
-    file.classes.forEach(cls => {
-      if (cls.methods.length > 5) {
-        logic.push(`Complex class: ${cls.name}`);
-      }
-    });
-
-    return logic;
-  }
-
   private calculateMetrics(files: FileAnalysis[]): RepositoryMetrics {
     const totalFiles = files.length;
     const totalLines = files.reduce((sum, f) => sum + f.lines, 0);
@@ -800,13 +768,32 @@ export class AnalysisEngine {
   }
 
   private generateInsights(files: FileAnalysis[], architecture: ArchitectureAnalysis, metrics: RepositoryMetrics): any {
+    const highComplexityFiles = files
+      .filter(f => f.complexity.cyclomatic > this.config.complexityThreshold)
+      .sort((a, b) => b.complexity.cyclomatic - a.complexity.cyclomatic)
+      .slice(0, 5)
+      .map(f => ({ path: f.path, complexity: f.complexity.cyclomatic }));
+
+    const hotspots = files
+      .filter(f => f.commitCount && f.commitCount > 1) // At least 2 commits
+      .sort((a, b) => (b.commitCount || 0) - (a.commitCount || 0))
+      .slice(0, 5)
+      .map(f => ({ path: f.path, commitCount: f.commitCount }));
+
+    const entryPoints = files
+      .filter(f => f.exports.length > 0)
+      .map(f => ({ path: f.path, exports: f.exports.map(e => e.name) }));
+
     return {
       architecturalStyle: this.determineArchitecturalStyle(architecture),
       codeQuality: this.assessCodeQuality(metrics),
       complexityDistribution: this.analyzeComplexityDistribution(files),
       potentialIssues: this.identifyPotentialIssues(files, metrics),
       recommendations: this.generateRecommendations(files, metrics),
-      learningPath: this.generateLearningPath(files, architecture)
+      learningPath: this.generateLearningPath(files, architecture),
+      highComplexityFiles,
+      hotspots,
+      entryPoints,
     };
   }
 
@@ -930,6 +917,9 @@ function calculateFunctionComplexity(node: any): number {
 
   function walk(n: any) {
     if (!n || typeof n !== 'object') return;
+    
+    let isComplexityNode = false;
+
     switch (n.type) {
       case 'IfStatement':
       case 'ForStatement':
@@ -941,19 +931,31 @@ function calculateFunctionComplexity(node: any): number {
       case 'CatchClause':
       case 'ConditionalExpression':
         complexity++;
+        isComplexityNode = true;
         break;
       case 'LogicalExpression':
-        if (n.operator === '&&' || n.operator === '||') complexity++;
+        if (n.operator === '&&' || n.operator === '||') {
+          complexity++;
+          isComplexityNode = true;
+        }
         break;
     }
-    // Recursively walk all child nodes
-    for (const key in n) {
-      if (n.hasOwnProperty(key)) {
-        const child = n[key];
-        if (Array.isArray(child)) {
-          child.forEach(walk);
-        } else if (typeof child === 'object' && child !== null && child.type) {
-          walk(child);
+    
+    // Only recurse on children if this node is not a complexity-contributing structure
+    // or if it's a logical expression, which can have nested logical expressions.
+    if (!isComplexityNode || n.type === 'LogicalExpression') {
+      for (const key in n) {
+        if (n.hasOwnProperty(key)) {
+          const child = n[key];
+          if (Array.isArray(child)) {
+            child.forEach(walk);
+          } else if (child && typeof child === 'object' && child.type) {
+            // Prevent walking into nested function/class definitions
+            if (child.type !== 'FunctionDeclaration' && child.type !== 'FunctionExpression' && 
+                child.type !== 'ArrowFunctionExpression' && child.type !== 'ClassDeclaration') {
+              walk(child);
+            }
+          }
         }
       }
     }

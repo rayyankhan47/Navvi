@@ -20,9 +20,19 @@ import {
 const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
   const [mounted, setMounted] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [color, setColor] = useState('');
   
   useEffect(() => {
     setMounted(true);
+
+    const colors = [
+      'text-green-500/50',
+      'text-blue-500/50',
+      'text-yellow-500/50',
+      'text-red-500/50'
+    ];
+    setColor(colors[Math.floor(Math.random() * colors.length)]);
+
     const animate = () => {
       setPosition({
         x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
@@ -30,7 +40,7 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
       });
     };
     
-    const interval = setInterval(animate, 3000 + delay * 1000);
+    const interval = setInterval(animate, 1500 + delay * 500);
     return () => clearInterval(interval);
   }, [delay]);
 
@@ -50,7 +60,7 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
 
   return (
     <motion.div
-      className="absolute text-xs text-lime-400/30 font-mono pointer-events-none"
+      className={`absolute text-xs font-mono pointer-events-none ${color}`}
       initial={{ opacity: 0, scale: 0 }}
       animate={{ 
         opacity: [0, 1, 0], 
@@ -215,7 +225,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 border border-white/20 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">N</span>
               </div>
               <span className="text-xl font-bold">Navvi</span>
@@ -240,65 +250,43 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <motion.section 
-        className="relative min-h-screen flex items-center justify-center px-6"
         style={{ y, opacity }}
+        className="relative min-h-screen flex items-center justify-center text-center px-6"
       >
-        <div className="max-w-6xl mx-auto text-center">
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeInOut" }}
+            transition={{ duration: 1, ease: "easeInOut", delay: 0.2 }}
+            className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 pb-4"
           >
-            <motion.h1 
-              className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-lime-100 to-green-100 bg-clip-text text-transparent"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2, delay: 0.2, ease: "easeInOut" }}
+            Developer Onboarding, Automated.
+          </motion.div>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeInOut", delay: 0.4 }}
+            className="mt-6 text-lg text-gray-400 max-w-2xl mx-auto"
+          >
+            Navvi is an AI-powered assistant that accelerates developer onboarding by creating interactive, context-aware roadmaps for any codebase.
+          </motion.p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeInOut", delay: 0.6 }}
+            className="mt-10 flex justify-center items-center space-x-4"
+          >
+            <Link 
+              href="/auth/signin"
+              className="bg-white/10 border border-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors flex items-center space-x-2"
             >
-              The Future of
-              <br />
-              Code Onboarding
-            </motion.h1>
-            
-            <motion.p 
-              className="text-xl md:text-2xl text-gray-400 mb-8 max-w-3xl mx-auto leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4, ease: "easeInOut" }}
-            >
-              Real code analysis, not AI chat. Interactive learning paths that actually help developers 
-              understand complex codebases in minutes, not months.
-            </motion.p>
-
-            <motion.div 
-              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.6, ease: "easeInOut" }}
-            >
-              <Link 
-                href="/auth/signin"
-                className="group bg-gradient-to-r from-lime-500 to-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-lime-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-              >
-                <span>Start Analyzing</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              
-              <button className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
-                <Play className="w-5 h-5" />
-                <span>Watch Demo</span>
-              </button>
-            </motion.div>
-
-            {/* Real-time Analysis Demo */}
-            <motion.div
-              className="max-w-md mx-auto"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.8, ease: "easeInOut" }}
-            >
-              <AnalysisDemo />
-            </motion.div>
+              <Zap className="w-5 h-5" />
+              <span>Analyze a Repo</span>
+            </Link>
+            <button className="group flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
+              <Play className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+              <span>Watch Demo</span>
+            </button>
           </motion.div>
         </div>
       </motion.section>
@@ -361,49 +349,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof Section */}
-      <section className="py-24 px-6 bg-white/5">
-        <div className="max-w-6xl mx-auto">
-          <motion.div 
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Loved by Developers
-            </h2>
-            <p className="text-xl text-gray-400">
-              Join thousands of developers who've transformed their onboarding experience
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <Testimonial
-              name="Sarah Chen"
-              role="Senior Engineer"
-              company="Stripe"
-              content="Navvi cut our onboarding time from 3 months to 2 weeks. The interactive visualizations are game-changing."
-              avatar="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
-            />
-            <Testimonial
-              name="Marcus Rodriguez"
-              role="Tech Lead"
-              company="Linear"
-              content="Finally, a tool that actually understands our codebase structure. The complexity analysis is spot-on."
-              avatar="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-            />
-            <Testimonial
-              name="Alex Thompson"
-              role="Engineering Manager"
-              company="Vercel"
-              content="Our new hires are productive in days instead of months. Navvi is the future of developer onboarding."
-              avatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-            />
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
@@ -441,9 +386,9 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
+      <footer className="py-12 px-6 bg-black border-t border-white/10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+          <div className="mb-6 md:mb-0">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <div className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">N</span>

@@ -177,7 +177,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-lime-500 to-green-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">N</span>
                 </div>
                 <span className="text-xl font-bold">Navvi</span>
@@ -292,253 +292,110 @@ export default function Dashboard() {
           </motion.div>
 
           {/* Repository Selection */}
-          <motion.div 
-            className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 mb-8"
+          <motion.div
+            className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Choose a Repository</h2>
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-6">
+              <div className="flex-grow mb-4 md:mb-0">
+                <h2 className="text-2xl font-semibold mb-2">Select a Repository</h2>
+                <p className="text-gray-400">
+                  Pick from your repositories below or search to find a specific one.
+                </p>
+              </div>
+              <button
+                onClick={handleAnalyzeRepository}
+                disabled={!selectedRepo || isAnalyzing}
+                className="w-full md:w-auto bg-white/10 border border-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white/20 transition-colors disabled:bg-gray-600/50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                <TrendingUp className="w-5 h-5" />
+                <span>Analyze</span>
+              </button>
+            </div>
+            
+            {analysisError && (
+              <div className="mt-4 text-red-500 bg-red-500/10 p-3 rounded-lg">
+                {analysisError}
+              </div>
+            )}
+
+            <div className="mt-8">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search repositories..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full bg-black/20 border border-white/10 rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                 />
               </div>
             </div>
-            
-            {isLoading ? (
-              <div className="text-center py-12 text-gray-400">Loading repositories...</div>
-            ) : (
-              ownedRepositories.length === 0 && collaborativeRepositories.length === 0 && forkedRepositories.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Github className="w-8 h-8 text-gray-500" />
+
+            <div className="mt-8 space-y-8">
+              {/* Owned Repositories */}
+              {filteredOwnedRepositories.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <Github className="w-5 h-5 mr-2" />
+                    Your Repositories
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredOwnedRepositories.map(repo => (
+                      <RepoCard 
+                        key={repo.id}
+                        repo={repo}
+                        isSelected={selectedRepo === repo.full_name}
+                        onSelect={() => setSelectedRepo(repo.full_name)}
+                      />
+                    ))}
                   </div>
-                  <h3 className="text-xl font-bold text-white">No Repositories Found</h3>
-                  <p className="text-gray-400 mt-2">
-                    We couldn't find any repositories. Try syncing with GitHub again.
-                  </p>
                 </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Owned Repositories */}
-                  {filteredOwnedRepositories.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3 text-gray-400">
-                        <Github className="w-5 h-5" />
-                        <span className="font-semibold">Your Repositories ({filteredOwnedRepositories.length})</span>
-                      </div>
-                      <div className="space-y-4">
-                        {filteredOwnedRepositories.map((repo, index) => (
-                          <motion.div
-                            key={repo.id}
-                            className={`p-4 rounded-lg transition-all duration-300 border ${
-                              selectedRepo === repo.full_name
-                                ? "bg-blue-500/10 border-blue-500"
-                                : "bg-white/5 border-transparent hover:bg-white/10"
-                            }`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.05 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0">
-                                <button
-                                  className="text-left w-full"
-                                  onClick={() => setSelectedRepo(repo.full_name)}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="truncate text-lg font-bold text-white">
-                                      {repo.full_name}
-                                    </div>
-                                  </div>
-                                  <p className="text-gray-400 mt-1 truncate">
-                                    {repo.description || "No description"}
-                                  </p>
-                                </button>
-                              </div>
-                              <div className="flex items-center space-x-4 ml-4">
-                                <span className="text-sm text-gray-400 capitalize">
-                                  {repo.language || "N/A"}
-                                </span>
-                                <span className="text-sm text-gray-400">
-                                  Updated {new Date(repo.updated_at).toLocaleDateString()}
-                                </span>
-                                {repo.private && (
-                                  <span className="text-xs font-semibold bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
-                                    Private
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Collaborative Repositories */}
-                  {filteredCollaborativeRepositories.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3 text-gray-400">
-                        <Users className="w-5 h-5" />
-                        <span className="font-semibold">Collaborations ({filteredCollaborativeRepositories.length})</span>
-                      </div>
-                      <div className="space-y-4">
-                        {filteredCollaborativeRepositories.map((repo, index) => (
-                          <motion.div
-                            key={repo.id}
-                            className={`p-4 rounded-lg transition-all duration-300 border ${
-                              selectedRepo === repo.full_name
-                                ? "bg-purple-500/10 border-purple-500"
-                                : "bg-white/5 border-transparent hover:bg-white/10"
-                            }`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.05 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0">
-                                <button
-                                  className="text-left w-full"
-                                  onClick={() => setSelectedRepo(repo.full_name)}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="truncate text-lg font-bold text-white">
-                                      {repo.full_name}
-                                    </div>
-                                  </div>
-                                  <p className="text-gray-400 mt-1 truncate">
-                                    {repo.description || "No description"}
-                                  </p>
-                                </button>
-                              </div>
-                              <div className="flex items-center space-x-4 ml-4">
-                                <span className="text-sm text-gray-400 capitalize">
-                                  {repo.language || "N/A"}
-                                </span>
-                                <span className="text-sm text-gray-400">
-                                  Updated {new Date(repo.updated_at).toLocaleDateString()}
-                                </span>
-                                {repo.private && (
-                                  <span className="text-xs font-semibold bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
-                                    Private
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Forked Repositories */}
-                  {filteredForkedRepositories.length > 0 && (
-                    <div className="space-y-4">
-                       <div className="flex items-center space-x-3 text-gray-400">
-                        <GitFork className="w-5 h-5" />
-                        <span className="font-semibold">Forks ({filteredForkedRepositories.length})</span>
-                      </div>
-                      <div className="space-y-4">
-                        {filteredForkedRepositories.map((repo, index) => (
-                          <motion.div
-                            key={repo.id}
-                            className={`p-4 rounded-lg transition-all duration-300 border ${
-                              selectedRepo === repo.full_name
-                                ? "bg-lime-500/10 border-lime-500"
-                                : "bg-white/5 border-transparent hover:bg-white/10"
-                            }`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.05 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0">
-                                <button
-                                  className="text-left w-full"
-                                  onClick={() => setSelectedRepo(repo.full_name)}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="truncate text-lg font-bold text-white">
-                                      {repo.full_name}
-                                    </div>
-                                  </div>
-                                  <p className="text-gray-400 mt-1 truncate">
-                                    {repo.description || "No description"}
-                                  </p>
-                                </button>
-                              </div>
-                              <div className="flex items-center space-x-4 ml-4">
-                                <span className="text-sm text-gray-400 capitalize">
-                                  {repo.language || "N/A"}
-                                </span>
-                                <span className="text-sm text-gray-400">
-                                  Updated {new Date(repo.updated_at).toLocaleDateString()}
-                                </span>
-                                {repo.private && (
-                                  <span className="text-xs font-semibold bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
-                                    Private
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              )}
+              
+              {/* Collaborative Repositories */}
+              {filteredCollaborativeRepositories.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Collaborations
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredCollaborativeRepositories.map(repo => (
+                      <RepoCard 
+                        key={repo.id}
+                        repo={repo}
+                        isSelected={selectedRepo === repo.full_name}
+                        onSelect={() => setSelectedRepo(repo.full_name)}
+                      />
+                    ))}
+                  </div>
                 </div>
-              )
-            )}
+              )}
+
+              {/* Forked Repositories */}
+              {filteredForkedRepositories.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <GitFork className="w-5 h-5 mr-2" />
+                    Forks
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredForkedRepositories.map(repo => (
+                      <RepoCard 
+                        key={repo.id}
+                        repo={repo}
+                        isSelected={selectedRepo === repo.full_name}
+                        onSelect={() => setSelectedRepo(repo.full_name)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
-
-          {/* Action Button */}
-          {selectedRepo && (
-            <motion.div 
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              <button
-                onClick={handleAnalyzeRepository}
-                disabled={isAnalyzing}
-                className={selectedRepo 
-                  ? "bg-gradient-to-r from-lime-500 to-green-600 hover:from-lime-600 hover:to-green-700 text-white transform hover:scale-105"
-                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                }
-              >
-                {isAnalyzing ? (
-                  <>
-                    <div className="spinner"></div>
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Analyze {selectedRepo.split('/')[1]}</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-              {analysisError && (
-                <p className="text-red-400 text-sm mt-3">
-                  {analysisError}
-                </p>
-              )}
-              {!analysisError && (
-                <p className="text-sm text-gray-400 mt-3">
-                  This will create an interactive onboarding experience for your codebase
-                </p>
-              )}
-            </motion.div>
-          )}
 
           {/* Features Preview */}
           <motion.div 
@@ -581,4 +438,42 @@ export default function Dashboard() {
       </main>
     </div>
   );
-} 
+}
+
+// Repository Card Component
+const RepoCard = ({ 
+  repo, 
+  isSelected,
+  onSelect
+}: { 
+  repo: Repository;
+  isSelected: boolean;
+  onSelect: () => void;
+}) => {
+  return (
+    <motion.div
+      onClick={onSelect}
+      className={`p-4 rounded-lg cursor-pointer transition-all duration-300 ${
+        isSelected
+          ? 'bg-blue-500/30 ring-2 ring-blue-400'
+          : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/20'
+      }`}
+      whileHover={{ y: -5 }}
+    >
+      <div className="flex items-center space-x-3 mb-2">
+        <div className="w-8 h-8 flex-shrink-0 bg-black/20 rounded-md flex items-center justify-center">
+          <Code className="w-5 h-5 text-gray-400" />
+        </div>
+        <h4 className="font-semibold truncate flex-1">{repo.name}</h4>
+        {repo.private && <span className="text-xs bg-gray-600 px-2 py-1 rounded">Private</span>}
+      </div>
+      <p className="text-sm text-gray-400 line-clamp-2 h-10">
+        {repo.description || 'No description'}
+      </p>
+      <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+        <span>{repo.language || 'N/A'}</span>
+        <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
+      </div>
+    </motion.div>
+  );
+}; 
