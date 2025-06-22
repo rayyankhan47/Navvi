@@ -182,11 +182,6 @@ MIT License - see LICENSE file for details
 ### Solution
 Navvi automatically analyzes codebases and creates personalized onboarding experiences, reducing time-to-productivity by 80%.
 
-### Market
-- **Target**: Tech companies with 10+ developers
-- **Pricing**: $20/month per onboarding user
-- **TAM**: $2B developer productivity market
-
 ### Competitive Advantage
 - **Security-first**: Local processing, zero code storage
 - **AI-powered**: Intelligent insights and personalized tutorials
