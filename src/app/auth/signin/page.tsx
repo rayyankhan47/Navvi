@@ -7,71 +7,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Github } from "lucide-react";
 
-// Floating Code Particle Component (copied from main page)
-const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
-  const [mounted, setMounted] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [color, setColor] = useState('');
-
-  useEffect(() => {
-    setMounted(true);
-
-    const colors = [
-      'text-green-500/50',
-      'text-blue-500/50',
-      'text-yellow-500/50',
-      'text-red-500/50'
-    ];
-    setColor(colors[Math.floor(Math.random() * colors.length)]);
-
-    const animate = () => {
-      setPosition({
-        x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
-        y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 800)
-      });
-    };
-    
-    const interval = setInterval(animate, 1500 + delay * 500);
-    return () => clearInterval(interval);
-  }, [delay]);
-
-  const codeSnippets = [
-    "function analyze() {",
-    "const complexity = calculate();",
-    "return insights;",
-    "}",
-    "class AnalysisEngine {",
-    "async parse() {",
-    "// Real AST parsing",
-    "}",
-    "}"
-  ];
-
-  if (!mounted) return null;
-
-  return (
-    <motion.div
-      className={`absolute text-xs font-mono pointer-events-none ${color}`}
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ 
-        opacity: [0, 1, 0], 
-        scale: [0, 1, 0],
-        x: position.x,
-        y: position.y
-      }}
-      transition={{ 
-        duration: 4, 
-        repeat: Infinity, 
-        delay,
-        ease: "easeInOut"
-      }}
-    >
-      {codeSnippets[Math.floor(Math.random() * codeSnippets.length)]}
-    </motion.div>
-  );
-};
-
-
 export default function SignIn() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -103,11 +38,6 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-        {/* Floating Code Particles */}
-        {Array.from({ length: 20 }).map((_, i) => (
-            <CodeParticle key={i} delay={i * 0.2} />
-        ))}
-        
         {/* Navigation */}
         <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
             <div className="max-w-7xl mx-auto px-6 py-4">
