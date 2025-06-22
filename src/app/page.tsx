@@ -41,7 +41,10 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
       });
     };
     
-    const interval = setInterval(animate, 3000 + delay * 1000);
+    // Set initial position
+    animate();
+    
+    const interval = setInterval(animate, 4000 + delay * 500);
     return () => clearInterval(interval);
   }, [delay]);
 
@@ -62,18 +65,21 @@ const CodeParticle = ({ delay = 0 }: { delay?: number }) => {
   return (
     <motion.div
       className={`absolute text-xs font-mono pointer-events-none ${color}`}
-      initial={{ opacity: 0, scale: 0 }}
+      style={{
+        left: position.x,
+        top: position.y,
+      }}
+      initial={{ opacity: 0, scale: 0.8 }}
       animate={{ 
-        opacity: [0, 1, 0], 
-        scale: [0, 1, 0],
-        x: position.x,
-        y: position.y
+        opacity: [0, 0.8, 0], 
+        scale: [0.8, 1, 0.8]
       }}
       transition={{ 
         duration: 4, 
         repeat: Infinity, 
-        delay,
-        ease: "easeInOut"
+        delay: delay * 0.5,
+        ease: "easeInOut",
+        times: [0, 0.5, 1]
       }}
     >
       {codeSnippets[Math.floor(Math.random() * codeSnippets.length)]}
