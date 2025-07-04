@@ -324,7 +324,7 @@ export default function AnalysisPage({ params }: AnalysisPageProps) {
                     <TrendingUp className="w-5 h-5 mr-2" />
                     Complexity
                     <span className="relative group ml-2">
-                      <span className="inline-block w-5 h-5 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center cursor-pointer">?</span>
+                      <span className="w-5 h-5 rounded-full bg-blue-700 text-white text-xs flex items-center justify-center cursor-pointer">?</span>
                       <span className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-black text-gray-200 text-xs rounded-lg shadow-lg p-3 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-20">
                         <strong>Cyclomatic Complexity</strong> is a software metric used to indicate the complexity of a program. It measures the number of linearly independent paths through a program's source code. Higher values mean more complex, harder-to-maintain code.
                       </span>
