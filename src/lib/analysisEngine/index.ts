@@ -131,7 +131,6 @@ export class AnalysisEngine {
     const dependencies: string[] = [];
     let lines = 0;
     let size = 0;
-    // Calculate cyclomatic complexity for the file
     let cyclomatic = 1;
     traverse(ast, {
       IfStatement() { cyclomatic++; },

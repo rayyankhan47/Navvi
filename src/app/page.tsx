@@ -270,7 +270,7 @@ const Testimonial = ({
     <div className="flex items-start space-x-4">
       <img src={avatar} alt={name} className="w-12 h-12 rounded-full" />
       <div className="flex-1">
-        <p className="text-gray-300 text-sm leading-relaxed mb-4">"{content}"</p>
+        <p className="text-gray-300 text-sm leading-relaxed mb-4">&quot;{content}&quot;</p>
         <div>
           <div className="font-semibold text-white">{name}</div>
           <div className="text-gray-400 text-sm">{role} at {company}</div>

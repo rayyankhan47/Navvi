@@ -109,7 +109,7 @@ export default function OnboardingPage() {
           </div>
           <h1 className="text-3xl font-bold mb-3">Welcome to Navvi</h1>
           <p className="text-gray-400 mb-8">
-            Let's get you started by connecting your GitHub account.
+            Let&apos;s get you started by connecting your GitHub account.
           </p>
           <button
             onClick={() => signIn("github", { callbackUrl: "/onboarding" })}
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
 
   const steps = [
     {
-      title: "What's your experience level?",
+      title: "What&apos;s your experience level?",
       description: "This helps us tailor the learning content to your needs",
       content: (
         <div className="grid gap-4">
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
     },
     {
       title: "What areas do you want to focus on?",
-      description: "Select topics you're most interested in learning",
+      description: "Select topics you&apos;re most interested in learning",
       content: (
         <div className="grid grid-cols-2 gap-3">
           {focusAreas.map((area) => (

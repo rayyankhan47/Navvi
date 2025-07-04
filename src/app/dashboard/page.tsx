@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
@@ -48,20 +48,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (session) {
-      checkOnboardingStatus();
-      fetchRepositories();
-    }
-  }, [session]);
-
-  const checkOnboardingStatus = async () => {
+  const checkOnboardingStatus = useCallback(async () => {
     try {
       const response = await fetch("/api/user/onboarding-status");
       if (response.ok) {
@@ -75,9 +62,9 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error checking onboarding status:", error);
     }
-  };
+  }, [router]);
 
-  const fetchRepositories = async () => {
+  const fetchRepositories = useCallback(async () => {
     try {
       const response = await fetch("/api/repositories");
       if (response.ok) {
@@ -95,7 +82,20 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (session) {
+      checkOnboardingStatus();
+      fetchRepositories();
+    }
+  }, [session, checkOnboardingStatus, fetchRepositories]);
 
   const handleAnalyzeRepository = async () => {
     if (!selectedRepo) return;
