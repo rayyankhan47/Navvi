@@ -290,13 +290,6 @@ export default function Dashboard() {
                   Pick from your repositories below or search to find a specific one.
                 </p>
               </div>
-              <Link
-                href="/auth/confirm"
-                className="w-full md:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-500 transition-colors flex items-center space-x-2"
-              >
-                <PlusCircle className="w-5 h-5" />
-                <span>Analyze a Repo</span>
-              </Link>
               <button
                 onClick={() => signOut()}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-500 transition-colors"
@@ -339,6 +332,7 @@ export default function Dashboard() {
                         repo={repo}
                         isSelected={selectedRepo === repo.full_name}
                         onSelect={() => setSelectedRepo(repo.full_name)}
+                        onAnalyze={() => handleAnalyzeRepository()}
                       />
                     ))}
                   </div>
@@ -359,6 +353,7 @@ export default function Dashboard() {
                         repo={repo}
                         isSelected={selectedRepo === repo.full_name}
                         onSelect={() => setSelectedRepo(repo.full_name)}
+                        onAnalyze={() => handleAnalyzeRepository()}
                       />
                     ))}
                         </div>
@@ -379,6 +374,7 @@ export default function Dashboard() {
                         repo={repo}
                         isSelected={selectedRepo === repo.full_name}
                         onSelect={() => setSelectedRepo(repo.full_name)}
+                        onAnalyze={() => handleAnalyzeRepository()}
                       />
                     ))}
                       </div>
@@ -434,16 +430,18 @@ export default function Dashboard() {
 const RepoCard = ({ 
   repo, 
   isSelected,
-  onSelect
+  onSelect,
+  onAnalyze
 }: { 
   repo: Repository;
   isSelected: boolean;
   onSelect: () => void;
+  onAnalyze: () => void;
 }) => {
   return (
     <motion.div
       onClick={onSelect}
-      className={`p-4 rounded-lg cursor-pointer transition-all duration-300 ${
+      className={`group p-4 rounded-lg cursor-pointer transition-all duration-300 ${
         isSelected
           ? 'bg-blue-500/30 ring-2 ring-blue-400'
           : 'bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/20'
@@ -464,6 +462,12 @@ const RepoCard = ({
         <span>{repo.language || 'N/A'}</span>
         <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
       </div>
+      <button
+        className={`mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-500 transition-colors${isSelected ? '' : ' hidden'}`}
+        onClick={(e) => { e.stopPropagation(); onAnalyze(); }}
+      >
+        Analyze Repo
+      </button>
     </motion.div>
   );
 }; 

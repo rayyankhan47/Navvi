@@ -4,10 +4,10 @@ import analysisResults from "../../../../lib/analysisStore";
 // In a real application, you'd store analysis results in a database
 // For now, we'll return a placeholder response
 export async function GET(
-  request: Request,
-  { params }: { params: { repo: string } }
+  { params }: { params: Promise<{ repo: string }> }
 ) {
-  const repoName = params.repo;
+  const { repo } = await params;
+  const repoName = repo;
 
   if (analysisResults.has(repoName)) {
     const analysis = analysisResults.get(repoName);
