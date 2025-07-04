@@ -1,5 +1,7 @@
 # Navvi - AI-Powered Codebase Onboarding
 
+View the project in live [here!](https://navvi-nu.vercel.app/)
+
 > Stop spending weeks understanding new codebases. Navvi analyzes your repository and creates interactive learning paths for new developers.
 
 ## About Navvi
